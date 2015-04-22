@@ -24,9 +24,21 @@ After building, you can just run the JAR file. There is a script named `run.sh`
 For example:
 
 ```
-./run.sh -f /tmp/highcpu.jfr -o output.txt
+./run.sh -f /tmp/highcpu.jfr -o /tmp/output.txt
 ```
 
+## How to generate a Flame Graph
+
+Clone [Brendan]'s [FlameGraph] repository, generate FlameGraph using `flamegraph.pl` and open the SVG file in your web browser.
+
+```
+git clone https://github.com/brendangregg/FlameGraph.git
+cd FlameGraph
+cat /tmp/output.txt | ./flamegraph.pl > ../traces-highcpu.svg
+firefox ../traces-highcpu.svg
+```
+
+[Brendan]: http://www.brendangregg.com/bio.html
 
 ## License
 
