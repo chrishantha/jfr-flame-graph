@@ -13,13 +13,13 @@ The required JMC dependencies need to installed to a local repository first.
 
 Please run `install-mc-jars.sh` script. The script will output a file named `jmc_version.properties`, which will show you the version of Java Mission Control Dependencies used.
 
-Update `<jmc.version>` property in `pom.xml` and make sure version is equal to the version found in `jmc_version.properties`.
+Update `<jmc.version>` property in `pom.xml` and make sure that the version is equal to the version found in `jmc_version.properties`.
 
-Now you can run `mvn clean install`
+Now you can run `mvn clean install`.
 
 ## How to run
 
-After building, you can just run the JAR file. There is a script named `run.sh`
+After building, you can just run the JAR file. There is a helper script named `run.sh` to run the jar file.
 
 For example:
 
