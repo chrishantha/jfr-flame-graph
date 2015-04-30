@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/chrishantha/jfr-flame-graph.svg?branch=master)](https://travis-ci.org/chrishantha/jfr-flame-graph)
+
 Converting JFR Method Profiling Samples to FlameGraph compatible format.
 ========================================================================
 
