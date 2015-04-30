@@ -31,3 +31,5 @@ function install_jar() {
 
 install_jar com.jrockit.mc.common
 install_jar com.jrockit.mc.flightrecorder
+
+sed -i -e "/<properties>/,/<\/properties>/ s|<jmc.version>.*</jmc.version>|<jmc.version>$jmc_version</jmc.version>|g" pom.xml
