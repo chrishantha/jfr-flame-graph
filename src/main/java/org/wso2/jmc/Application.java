@@ -15,6 +15,8 @@
  */
 package org.wso2.jmc;
 
+import java.io.IOException;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 
@@ -29,7 +31,7 @@ public class Application {
         try {
             jcmdr.parse(args);
             jfrToFlameGraphWriter.write();
-        } catch (ParameterException e) {
+        } catch (ParameterException | IOException e) {
             System.out.println(e.getMessage());
         }
 

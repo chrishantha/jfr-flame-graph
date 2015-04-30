@@ -53,13 +53,10 @@ public class JFRToFlameGraphWriter {
     public JFRToFlameGraphWriter() {
     }
 
-    public void write() {
+    public void write() throws IOException {
         FlightRecording recording = FlightRecordingLoader.loadFile(jfrdump);
-
         final String EVENT_TYPE = "Method Profiling Sample";
-
         Map<String, Integer> stackTraceMap = new LinkedHashMap<String, Integer>();
-
         IView view = recording.createView();
         for (IEvent event : view) {
             // Filter for Method Profiling Sample Events
@@ -104,19 +101,15 @@ public class JFRToFlameGraphWriter {
         }
 
         FileWriter fileWriter;
-        try {
-            if (outputFile == null) {
-                outputFile = new File("output.txt");
-            }
-            fileWriter = new FileWriter(outputFile);
-            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-            for (Entry<String, Integer> entry : stackTraceMap.entrySet()) {
-                bufferedWriter.write(String.format("%s %d%n", entry.getKey(), entry.getValue()));
-            }
-            bufferedWriter.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (outputFile == null) {
+            outputFile = new File("output.txt");
         }
+        fileWriter = new FileWriter(outputFile);
+        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+        for (Entry<String, Integer> entry : stackTraceMap.entrySet()) {
+            bufferedWriter.write(String.format("%s %d%n", entry.getKey(), entry.getValue()));
+        }
+        bufferedWriter.close();
     }
 
 }
