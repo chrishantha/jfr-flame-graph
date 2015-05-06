@@ -54,13 +54,21 @@ public class ApplicationTest extends TestCase {
 
     public void testOptions() throws IOException {
         File tmp = File.createTempFile(getClass().getName(), "");
-        String[] args = { "-f", tmp.toString(), "-o", tmp.toString(), "-l" };
+        String[] args = { "-f", tmp.toString(), "-o", tmp.toString() };
         JCommander jc = new JCommander();
         jc.addObject(jfrToFlameGraphWriter);
         jc.parse(args);
         assertTrue(tmp.exists());
         assertEquals(tmp, jfrToFlameGraphWriter.jfrdump);
         assertEquals(tmp, jfrToFlameGraphWriter.outputFile);
-        assertTrue(jfrToFlameGraphWriter.includeLineNumbers);
+        assertFalse(jfrToFlameGraphWriter.ignoreLineNumbers);
+    }
+
+    public void testIgnoreLineNumbersOption() throws IOException {
+        String[] args = { "-f", "temp", "-i" };
+        JCommander jc = new JCommander();
+        jc.addObject(jfrToFlameGraphWriter);
+        jc.parse(args);
+        assertTrue(jfrToFlameGraphWriter.ignoreLineNumbers);
     }
 }

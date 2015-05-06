@@ -41,8 +41,8 @@ public class JFRToFlameGraphWriter {
     @Parameter(names = { "-f", "--jfrdump" }, description = "Java Flight Recorder Dump", required = true)
     File jfrdump;
 
-    @Parameter(names = { "-l", "--include-line-numbers" }, description = "Include Line Numbers in Stack Frame")
-    boolean includeLineNumbers = false;
+    @Parameter(names = { "-i", "--ignore-line-numbers" }, description = "Ignore Line Numbers in Stack Frame")
+    boolean ignoreLineNumbers = false;
 
     @Parameter(names = { "-o", "--output" }, description = "Output file")
     File outputFile;
@@ -70,7 +70,7 @@ public class JFRToFlameGraphWriter {
                     StringBuilder methodBuilder = new StringBuilder();
                     IMCMethod method = frame.getMethod();
                     methodBuilder.append(method.getHumanReadable(false, true, true, true, true, true));
-                    if (includeLineNumbers) {
+                    if (!ignoreLineNumbers) {
                         methodBuilder.append(":");
                         methodBuilder.append(frame.getFrameLineNumber());
                     }
