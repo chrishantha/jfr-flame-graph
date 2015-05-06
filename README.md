@@ -11,13 +11,16 @@ This application uses the unsupported [JMC Parser].
 
 ## How to build
 
-The required JMC dependencies need to installed to a local repository first.
+**Step 1:**
 
-Please run `install-mc-jars.sh` script. The script will output a file named `jmc_version.properties`, which will show you the version of Java Mission Control Dependencies used.
+Run `install-mc-jars.sh` script.
 
-Update `<jmc.version>` property in `pom.xml` and make sure that the version is equal to the version found in `jmc_version.properties`.
+> The required JMC dependencies need to be installed to a local repository first. The script will install required JMC jars to the local repository (The `repo` directory) and output a file named `jmc_version.properties`, which will show you the version of Java Mission Control Dependencies used.
+> This script should automatically update the `<jmc.version>` property in `pom.xml`. Please verify that the `<jmc.version>` value is equal to the version found in `jmc_version.properties`.
 
-Now you can run `mvn clean install`.
+**Step 2:**
+
+Run `mvn clean install`.
 
 ## How to run
 
@@ -27,6 +30,24 @@ For example:
 
 ```
 ./run.sh -f /tmp/highcpu.jfr -o /tmp/output.txt
+```
+
+Following are the options available.
+```
+$ ./run.sh -h
+The following option is required: -f, --jfrdump 
+Usage: Application [options]
+  Options:
+    -h, --help
+       Display Help
+       Default: false
+    -i, --ignore-line-numbers
+       Ignore Line Numbers in Stack Frame
+       Default: false
+  * -f, --jfrdump
+       Java Flight Recorder Dump
+    -o, --output
+       Output file
 ```
 
 ## How to generate a Flame Graph
