@@ -9,6 +9,10 @@ This is a simple application to read Method Profiling Samples from Java Flight R
 This application uses the unsupported [JMC Parser].
 [JMC Parser]: http://hirt.se/blog/?p=446
 
+See my blog post on "[Flame Graphs with Java Flight Recordings]" for more details.
+
+[Flame Graphs with Java Flight Recordings]: http://isuru-perera.blogspot.com/2015/05/flame-graphs-with-java-flight-recordings.html
+
 ## How to build
 
 **Step 1:**
