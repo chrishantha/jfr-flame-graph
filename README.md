@@ -24,7 +24,7 @@ Run `install-mc-jars.sh` script.
 
 **Step 2:**
 
-Run `mvn clean install`.
+Run `mvn clean install -U`.
 
 ## How to run
 
