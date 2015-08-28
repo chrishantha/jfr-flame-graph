@@ -17,4 +17,6 @@
 # Run the application
 # ----------------------------------------------------------------------------
 
-java -jar target/org.wso2.jmc.flamegraph-*.jar $*
+JFG_DIR=$(dirname "$0")
+
+java -jar ${JFG_DIR}/target/org.wso2.jmc.flamegraph-*.jar $*
