@@ -30,7 +30,7 @@ public class Application {
 
         try {
             jcmdr.parse(args);
-            jfrToFlameGraphWriter.write();
+            jfrToFlameGraphWriter.process();
         } catch (ParameterException | IOException e) {
             System.out.println(e.getMessage());
         }
