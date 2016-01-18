@@ -69,6 +69,11 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.5</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -123,6 +128,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>4.12</junit.version>
         <jcommander.version>1.48</jcommander.version>
-        <jmc.version>5.5.0.165303</jmc.version>
+        <jmc.version>5.4.0.162463</jmc.version>
     </properties>
 </project>

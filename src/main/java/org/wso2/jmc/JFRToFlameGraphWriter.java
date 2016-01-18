@@ -19,12 +19,17 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
 
 import com.beust.jcommander.Parameter;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.jrockit.mc.common.IMCFrame;
 import com.jrockit.mc.common.IMCMethod;
 import com.jrockit.mc.flightrecorder.FlightRecording;
@@ -47,69 +52,189 @@ public class JFRToFlameGraphWriter {
     @Parameter(names = { "-o", "--output" }, description = "Output file")
     File outputFile;
 
+    @Parameter(names = { "-j", "--json" }, description = "Export as json")
+    boolean exportJson = false;
+
+    @Parameter(names = { "-l", "--live" }, description = "Export stack trace sample timestamp, requires --json")
+    boolean exportTimestamp = false;
+
     @Parameter(names = { "-h", "--help" }, description = "Display Help")
     boolean help = false;
 
+    final String EVENT_TYPE = "Method Profiling Sample";
+    final String EVENT_VALUE_STACK = "(stackTrace)";
+	
+    /** the data model for live json */
+    LiveRecording liveRecording;
+    /** the data model for json */
+    StackFrame profile = new StackFrame("root");
+    /** the data model for folded stacks */
+    Map<String, Integer> stackTraceMap;
+    
+    class LiveRecording {
+    	Map<Long,StackFrame> profilesMap = new HashMap<Long,StackFrame>();
+
+		public StackFrame getProfile(long startTimestampSecEpoch) {
+
+			StackFrame profile = profilesMap.get(startTimestampSecEpoch);
+            if (profile == null) {
+            	profile = new StackFrame("root");
+            	profilesMap.put(startTimestampSecEpoch, profile);
+            }
+            return profile;
+		}
+    }
+    
+    class StackFrame {
+		String name;
+    	int value = 0;
+    	List<StackFrame> children = null;
+    	transient Map<String,StackFrame> childrenMap = new HashMap<String,StackFrame>();
+
+    	public StackFrame(String string) {
+    		name = string;
+		}
+		public StackFrame addFrame(String frameName) {
+			if(children == null) {
+				children = new ArrayList<StackFrame>();
+			}
+			StackFrame frame = childrenMap.get(frameName);
+			if(frame == null) {
+				frame = new StackFrame(frameName);
+				childrenMap.put(frameName, frame);
+				children.add(frame);
+			}
+			frame.value++;
+			return frame;
+		}
+    }
+    
     public JFRToFlameGraphWriter() {
     }
 
-    public void write() throws IOException {
-        FlightRecording recording = FlightRecordingLoader.loadFile(jfrdump);
-        final String EVENT_TYPE = "Method Profiling Sample";
-        Map<String, Integer> stackTraceMap = new LinkedHashMap<String, Integer>();
-        IView view = recording.createView();
+	public void process() throws IOException {
+		readJFR();
+
+        if (outputFile == null) {
+            outputFile = new File("output.txt");
+        }
+        FileWriter fileWriter = new FileWriter(outputFile);
+        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+        try {
+        		if(exportJson) {
+        			writeJson(bufferedWriter);
+        		} else {
+        			writeFolded(bufferedWriter);
+        		}
+        } finally {
+        	bufferedWriter.close();
+        	fileWriter.close();
+        }
+	}
+
+	private void readJFR() {
+        FlightRecording flightRecording = FlightRecordingLoader.loadFile(jfrdump);
+        if(exportJson) {
+        	if(exportTimestamp) {
+        		liveRecording = new LiveRecording();
+        	} else {
+        		profile = new StackFrame("root");
+        	}
+        } else {
+        	stackTraceMap = new LinkedHashMap<String, Integer>();
+        }
+        IView view = flightRecording.createView();
         for (IEvent event : view) {
             // Filter for Method Profiling Sample Events
             if (EVENT_TYPE.equals(event.getEventType().getName())) {
                 // Get Stack Trace from the event. Field ID was identified from
                 // event.getEventType().getFieldIdentifiers()
-                FLRStackTrace flrStackTrace = (FLRStackTrace) event.getValue("(stackTrace)");
-
-                Stack<String> stack = new Stack<String>();
-                for (IMCFrame frame : flrStackTrace.getFrames()) {
-                    StringBuilder methodBuilder = new StringBuilder();
-                    IMCMethod method = frame.getMethod();
-                    methodBuilder.append(method.getHumanReadable(false, true, true, true, true, true));
-                    if (!ignoreLineNumbers) {
-                        methodBuilder.append(":");
-                        methodBuilder.append(frame.getFrameLineNumber());
-                    }
-                    // Push method to a stack
-                    stack.push(methodBuilder.toString());
-                }
-
-                // StringBuilder to keep stack trace
-                StringBuilder stackTraceBuilder = new StringBuilder();
-                boolean appendSemicolon = false;
-                while (!stack.empty()) {
-                    if (appendSemicolon) {
-                        stackTraceBuilder.append(";");
-                    } else {
-                        appendSemicolon = true;
-                    }
-                    stackTraceBuilder.append(stack.pop());
-                }
-                String stackTrace = stackTraceBuilder.toString();
-                Integer count = stackTraceMap.get(stackTrace);
-                if (count == null) {
-                    count = 1;
+                FLRStackTrace flrStackTrace = (FLRStackTrace) event.getValue(EVENT_VALUE_STACK);
+        		Stack<String> stack = getStack(flrStackTrace);
+        		
+                if(exportJson) {
+                	processJsonStack(event, stack);
                 } else {
-                    count++;
+                    processFoldedStack(stack);
                 }
-                stackTraceMap.put(stackTrace, count);
             }
         }
+	}
 
-        FileWriter fileWriter;
-        if (outputFile == null) {
-            outputFile = new File("output.txt");
+    private void processJsonStack(IEvent event, Stack<String> stack) {
+
+    	StackFrame frame;
+    	if(exportTimestamp) {
+            long startTimestampSecEpoch = event.getStartTimestamp()/1000000000;
+            System.out.println(startTimestampSecEpoch);
+            frame = liveRecording.getProfile(startTimestampSecEpoch);
+    	} else {
+    		frame = profile;
+    	}
+    	
+        while (!stack.empty()) {
+        	frame = frame.addFrame(stack.pop());
         }
-        fileWriter = new FileWriter(outputFile);
-        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-        for (Entry<String, Integer> entry : stackTraceMap.entrySet()) {
-            bufferedWriter.write(String.format("%s %d%n", entry.getKey(), entry.getValue()));
+	}
+
+	private void processFoldedStack(Stack<String> stack) {
+    	
+        // StringBuilder to keep stack trace
+        StringBuilder stackTraceBuilder = new StringBuilder();
+        boolean appendSemicolon = false;
+        while (!stack.empty()) {
+            if (appendSemicolon) {
+                stackTraceBuilder.append(";");
+            } else {
+                appendSemicolon = true;
+            }
+            stackTraceBuilder.append(stack.pop());
         }
-        bufferedWriter.close();
+        String stackTrace = stackTraceBuilder.toString();
+        Integer count = stackTraceMap.get(stackTrace);
+        if (count == null) {
+            count = 1;
+        } else {
+            count++;
+        }
+        stackTraceMap.put(stackTrace, count);
+	}
+
+	private Stack<String> getStack(FLRStackTrace flrStackTrace) {
+
+        Stack<String> stack = new Stack<String>();
+        for (IMCFrame frame : flrStackTrace.getFrames()) {
+            // Push method to a stack
+            stack.push(getFrameName(frame));
+        }
+        return stack;
+	}
+
+	private String getFrameName(IMCFrame frame) {
+        StringBuilder methodBuilder = new StringBuilder();
+        IMCMethod method = frame.getMethod();
+        methodBuilder.append(method.getHumanReadable(false, true, true, true, true, true));
+        if (!ignoreLineNumbers) {
+            methodBuilder.append(":");
+            methodBuilder.append(frame.getFrameLineNumber());
+        }
+        return methodBuilder.toString();
+	}
+
+	public void writeFolded(BufferedWriter bufferedWriter) throws IOException {
+		
+		for (Entry<String, Integer> entry : stackTraceMap.entrySet()) {
+			bufferedWriter.write(String.format("%s %d%n", entry.getKey(), entry.getValue()));
+		}
     }
+
+	private void writeJson(BufferedWriter bufferedWriter) {
+		Gson gson = new GsonBuilder().create();
+    	if(exportTimestamp) {
+    		gson.toJson(this.liveRecording.profilesMap, bufferedWriter);
+    	} else {
+    		gson.toJson(this.profile, bufferedWriter);
+    	}
+	}
 
 }
