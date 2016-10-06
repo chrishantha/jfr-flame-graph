@@ -17,12 +17,15 @@ package org.wso2.jmc;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
+import java.util.zip.GZIPInputStream;
 
 import com.beust.jcommander.Parameter;
 import com.jrockit.mc.common.IMCFrame;
@@ -50,11 +53,20 @@ public class JFRToFlameGraphWriter {
     @Parameter(names = { "-h", "--help" }, description = "Display Help")
     boolean help = false;
 
+
     public JFRToFlameGraphWriter() {
     }
 
     public void write() throws IOException {
-        FlightRecording recording = FlightRecordingLoader.loadFile(jfrdump);
+        FlightRecording recording = null;
+
+        try {
+            recording = FlightRecordingLoader.loadFile(jfrdump);
+        }
+        catch( Exception e ) {
+            recording = FlightRecordingLoader.loadFile(decompressFile( jfrdump ));
+        }
+
         final String EVENT_TYPE = "Method Profiling Sample";
         Map<String, Integer> stackTraceMap = new LinkedHashMap<String, Integer>();
         IView view = recording.createView();
@@ -111,5 +123,39 @@ public class JFRToFlameGraphWriter {
         }
         bufferedWriter.close();
     }
+
+    private File decompressFile( final File compressedFile ) throws IOException
+    {
+        byte[] buffer = new byte[1024];
+
+        GZIPInputStream  compressedStream = null;
+        FileOutputStream uncompressedFileStream = null;
+        File             decompressedFile = null;
+
+
+        try {
+            compressedStream = new GZIPInputStream(new FileInputStream(compressedFile));
+
+            decompressedFile = File.createTempFile("flightrecorder_", null);
+            decompressedFile.deleteOnExit();
+            uncompressedFileStream = new FileOutputStream(decompressedFile);
+
+            int numberOfBytes;
+
+            while ((numberOfBytes = compressedStream.read(buffer)) > 0) {
+                uncompressedFileStream.write(buffer, 0, numberOfBytes);
+            }
+        }
+        catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        finally {
+            compressedStream.close();
+            uncompressedFileStream.close();
+        }
+
+        return decompressedFile;
+    }
+
 
 }
