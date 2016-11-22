@@ -47,6 +47,13 @@
         </license>
     </licenses>
 
+    <scm>
+        <url>https://github.com/chrishantha/jfr-flame-graph.git</url>
+        <developerConnection>scm:git:https://github.com/chrishantha/jfr-flame-graph.git</developerConnection>
+        <connection>scm:git:https://github.com/chrishantha/jfr-flame-graph.git</connection>
+        <tag>HEAD</tag>
+    </scm>
+
     <dependencies>
         <dependency>
             <groupId>com.beust</groupId>
