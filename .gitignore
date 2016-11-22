@@ -13,6 +13,10 @@ target/
 .project
 .classpath
 
+#Idea Files
+.idea
+*.iml
+
 .metadata
 bin/
 tmp/
