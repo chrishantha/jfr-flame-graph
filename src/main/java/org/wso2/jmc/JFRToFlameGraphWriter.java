@@ -17,6 +17,8 @@ package org.wso2.jmc;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
+import java.util.zip.GZIPInputStream;
 
 import com.beust.jcommander.Parameter;
 import com.google.gson.Gson;
@@ -132,8 +135,16 @@ public class JFRToFlameGraphWriter {
         }
 	}
 
-	private void readJFR() {
-        FlightRecording flightRecording = FlightRecordingLoader.loadFile(jfrdump);
+	private void readJFR() throws IOException {
+     FlightRecording recording = null;
+
+             try {
+             recording = FlightRecordingLoader.loadFile(jfrdump);
+         }
+     catch( Exception e ) {
+             recording = FlightRecordingLoader.loadFile(decompressFile( jfrdump ));
+         }
+
         if(exportJson) {
         	if(exportTimestamp) {
         		liveRecording = new LiveRecording();
@@ -143,7 +154,8 @@ public class JFRToFlameGraphWriter {
         } else {
         	stackTraceMap = new LinkedHashMap<String, Integer>();
         }
-        IView view = flightRecording.createView();
+        IView view = recording.createView();
+
         for (IEvent event : view) {
             // Filter for Method Profiling Sample Events
             if (EVENT_TYPE.equals(event.getEventType().getName())) {
@@ -228,6 +240,7 @@ public class JFRToFlameGraphWriter {
 		}
     }
 
+
 	private void writeJson(BufferedWriter bufferedWriter) {
 		Gson gson = new GsonBuilder().create();
     	if(exportTimestamp) {
@@ -236,5 +249,39 @@ public class JFRToFlameGraphWriter {
     		gson.toJson(this.profile, bufferedWriter);
     	}
 	}
+
+    private File decompressFile( final File compressedFile ) throws IOException
+    {
+        byte[] buffer = new byte[1024];
+
+        GZIPInputStream  compressedStream = null;
+        FileOutputStream uncompressedFileStream = null;
+        File             decompressedFile = null;
+
+
+        try {
+            compressedStream = new GZIPInputStream(new FileInputStream(compressedFile));
+
+            decompressedFile = File.createTempFile("flightrecorder_", null);
+            decompressedFile.deleteOnExit();
+            uncompressedFileStream = new FileOutputStream(decompressedFile);
+
+            int numberOfBytes;
+
+            while ((numberOfBytes = compressedStream.read(buffer)) > 0) {
+                uncompressedFileStream.write(buffer, 0, numberOfBytes);
+            }
+        }
+        catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        finally {
+            compressedStream.close();
+            uncompressedFileStream.close();
+        }
+
+        return decompressedFile;
+    }
+
 
 }
