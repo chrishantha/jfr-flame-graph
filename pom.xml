@@ -26,7 +26,7 @@
 
     <groupId>org.wso2.jmc</groupId>
     <artifactId>org.wso2.jmc.flamegraph</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>org.wso2.jmc.flamegraph</name>
@@ -49,7 +49,7 @@
         <url>https://github.com/chrishantha/jfr-flame-graph.git</url>
         <developerConnection>scm:git:https://github.com/chrishantha/jfr-flame-graph.git</developerConnection>
         <connection>scm:git:https://github.com/chrishantha/jfr-flame-graph.git</connection>
-        <tag>v0.0.1</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <dependencies>
