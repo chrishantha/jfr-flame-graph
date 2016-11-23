@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wso2.jmc;
+package com.github.chrishantha.jfr.flamegraph.output;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -40,7 +40,6 @@ public class Application {
         jcmdr.addCommand(FOLDED_OUTPUT_COMMAND, foldedOutputCommand);
         JsonOutputCommand jsonOutputCommand = new JsonOutputCommand();
         jcmdr.addCommand(JSON_OUTPUT_COMMAND, jsonOutputCommand);
-
 
         try {
             jcmdr.parse(args);

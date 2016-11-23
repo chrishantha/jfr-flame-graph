@@ -25,12 +25,12 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.wso2.jmc</groupId>
-    <artifactId>org.wso2.jmc.flamegraph</artifactId>
+    <groupId>com.github.chrishantha.jfr</groupId>
+    <artifactId>flamegraph-output</artifactId>
     <version>0.0.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>org.wso2.jmc.flamegraph</name>
+    <name>flamegraph-output</name>
     <url>http://maven.apache.org</url>
     <inceptionYear>2015</inceptionYear>
 
@@ -101,7 +101,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>org.wso2.jmc.Application</mainClass>
+                            <mainClass>com.github.chrishantha.jfr.flamegraph.output.Application</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

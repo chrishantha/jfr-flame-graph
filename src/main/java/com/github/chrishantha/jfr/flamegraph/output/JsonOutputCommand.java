@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wso2.jmc;
+package com.github.chrishantha.jfr.flamegraph.output;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Stack;
 
 /**
- * Create JSON output to be used with d3-flame-graph
+ * Create JSON output to be used with d3-flame-graph. This is similar to https://github.com/spiermar/node-stack-convert
  */
 @Parameters(commandNames = "json", commandDescription = "Create json output for d3-flame-graph")
 public class JsonOutputCommand extends JFRToFlameGraphWriterCommand {

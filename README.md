@@ -28,30 +28,53 @@ Run `mvn clean install -U`.
 
 ## How to run
 
-After building, you can just run the JAR file. There is a helper script named `run.sh` to run the jar file.
+After building, you can just run the JAR file. There is a helper script named `flamegraph-output.sh` to run the jar file.
 
 For example:
 
 ```
-./run.sh -f /tmp/highcpu.jfr -o /tmp/output.txt
+./flamegraph-output.sh folded -f /tmp/highcpu.jfr -o /tmp/output.txt
 ```
 
 Following are the options available.
 ```
-$ ./run.sh -h
-The following option is required: -f, --jfrdump 
-Usage: Application [options]
+$ ./flamegraph-output.sh -h
+Usage: Application [options] [command] [command options]
   Options:
     -h, --help
-       Display Help
-       Default: false
-    -i, --ignore-line-numbers
-       Ignore Line Numbers in Stack Frame
-       Default: false
-  * -f, --jfrdump
-       Java Flight Recorder Dump
-    -o, --output
-       Output file
+      Display Help
+      Default: false
+  Commands:
+    folded      Create folded output
+      Usage: folded [options]
+        Options:
+          -d, --decompress
+            Decompress the JFR file
+            Default: false
+          -i, --ignore-line-numbers
+            Ignore Line Numbers in Stack Frame
+            Default: false
+        * -f, --jfrdump
+            Java Flight Recorder Dump
+          -o, --output
+            Output file
+
+    json      Create json output for d3-flame-graph
+      Usage: json [options]
+        Options:
+          -d, --decompress
+            Decompress the JFR file
+            Default: false
+          -i, --ignore-line-numbers
+            Ignore Line Numbers in Stack Frame
+            Default: false
+        * -f, --jfrdump
+            Java Flight Recorder Dump
+          -l, --live
+            Export stack trace sample timestamp
+            Default: false
+          -o, --output
+            Output file
 ```
 
 ## How to generate a Flame Graph

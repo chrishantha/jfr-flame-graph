@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wso2.jmc;
+package com.github.chrishantha.jfr.flamegraph.output;
 
 import com.beust.jcommander.Parameter;
 import com.jrockit.mc.common.IMCFrame;
