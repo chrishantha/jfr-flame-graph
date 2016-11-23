@@ -50,6 +50,15 @@ public abstract class JFRToFlameGraphWriterCommand {
     @Parameter(names = {"-d", "--decompress"}, description = "Decompress the JFR file")
     boolean decompress = false;
 
+    @Parameter(names = {"-r", "--show-return-value"}, description = "Show Return Value for Methods in the Stack")
+    boolean showReturnValue = false;
+
+    @Parameter(names = {"-q", "--use-qualified-names"}, description = "Use Qualified Names in the Stack", arity = 1)
+    boolean useQualifiedNames = true;
+
+    @Parameter(names = {"-a", "--show-arguments"}, description = "Show arguments in Methods", arity = 1)
+    boolean showArguments = true;
+
     private final String EVENT_TYPE = "Method Profiling Sample";
     private final String EVENT_VALUE_STACK = "(stackTrace)";
 
@@ -112,7 +121,8 @@ public abstract class JFRToFlameGraphWriterCommand {
     private String getFrameName(IMCFrame frame) {
         StringBuilder methodBuilder = new StringBuilder();
         IMCMethod method = frame.getMethod();
-        methodBuilder.append(method.getHumanReadable(false, true, true, true, true, true));
+        methodBuilder.append(method.getHumanReadable(showReturnValue, useQualifiedNames, true, useQualifiedNames,
+                showArguments, useQualifiedNames));
         if (!ignoreLineNumbers) {
             methodBuilder.append(":");
             methodBuilder.append(frame.getFrameLineNumber());
