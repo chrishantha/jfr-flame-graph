@@ -15,25 +15,34 @@
  */
 package org.wso2.jmc;
 
-import java.io.File;
-import java.io.IOException;
-
+import com.beust.jcommander.JCommander;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-import com.beust.jcommander.JCommander;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Unit tests for the main Application.
  */
 public class ApplicationTest extends TestCase {
 
-    private JFRToFlameGraphWriter jfrToFlameGraphWriter;
+    private Application application;
+
+    private FoldedOutputCommand foldedOutputCommand;
+
+    private JsonOutputCommand jsonOutputCommand;
+
+    private static final String FOLDED_OUTPUT_COMMAND = "folded";
+
+    private static final String JSON_OUTPUT_COMMAND = "json";
 
     @Override
     protected void setUp() throws Exception {
-        jfrToFlameGraphWriter = new JFRToFlameGraphWriter();
+        application = new Application();
+        foldedOutputCommand = new FoldedOutputCommand();
+        jsonOutputCommand = new JsonOutputCommand();
     }
 
     /**
@@ -52,23 +61,44 @@ public class ApplicationTest extends TestCase {
         return new TestSuite(ApplicationTest.class);
     }
 
-    public void testOptions() throws IOException {
-        File tmp = File.createTempFile(getClass().getName(), "");
-        String[] args = { "-f", tmp.toString(), "-o", tmp.toString() };
+    private void parseCommands(JFRToFlameGraphWriterCommand jfrToFlameGraphWriterCommand,
+                               String commandName, String[] args) {
         JCommander jc = new JCommander();
-        jc.addObject(jfrToFlameGraphWriter);
+        jc.addObject(application);
+        jc.addCommand(commandName, jfrToFlameGraphWriterCommand);
         jc.parse(args);
+        assertEquals(commandName, jc.getParsedCommand());
+    }
+
+    private void testJFRToFlameGraphWriterCommand(JFRToFlameGraphWriterCommand jfrToFlameGraphWriterCommand,
+                                                  String commandName) throws IOException {
+        File tmp = File.createTempFile(getClass().getName(), "");
+        String[] args = {commandName, "-f", tmp.toString(), "-o", tmp.toString()};
+        parseCommands(jfrToFlameGraphWriterCommand, commandName, args);
         assertTrue(tmp.exists());
-        assertEquals(tmp, jfrToFlameGraphWriter.jfrdump);
-        assertEquals(tmp, jfrToFlameGraphWriter.outputFile);
-        assertFalse(jfrToFlameGraphWriter.ignoreLineNumbers);
+        assertEquals(tmp, jfrToFlameGraphWriterCommand.jfrdump);
+        assertEquals(tmp, jfrToFlameGraphWriterCommand.outputFile);
+        assertFalse(jfrToFlameGraphWriterCommand.ignoreLineNumbers);
+    }
+
+    public void testFoldedOutputCommandOptions() throws IOException {
+        testJFRToFlameGraphWriterCommand(foldedOutputCommand, FOLDED_OUTPUT_COMMAND);
+    }
+
+    public void testJsonOutputCommandOptions() throws IOException {
+        testJFRToFlameGraphWriterCommand(jsonOutputCommand, JSON_OUTPUT_COMMAND);
     }
 
     public void testIgnoreLineNumbersOption() throws IOException {
-        String[] args = { "-f", "temp", "-i" };
-        JCommander jc = new JCommander();
-        jc.addObject(jfrToFlameGraphWriter);
-        jc.parse(args);
-        assertTrue(jfrToFlameGraphWriter.ignoreLineNumbers);
+        String[] args = {FOLDED_OUTPUT_COMMAND, "-f", "temp", "-i"};
+        parseCommands(foldedOutputCommand, FOLDED_OUTPUT_COMMAND, args);
+        assertTrue(foldedOutputCommand.ignoreLineNumbers);
     }
+
+    public void testLiveOption() throws IOException {
+        String[] args = {JSON_OUTPUT_COMMAND, "-f", "temp", "-l"};
+        parseCommands(jsonOutputCommand, JSON_OUTPUT_COMMAND, args);
+        assertTrue(jsonOutputCommand.exportTimestamp);
+    }
+
 }
