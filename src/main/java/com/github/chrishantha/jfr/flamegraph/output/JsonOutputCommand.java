@@ -34,6 +34,8 @@ import java.util.Stack;
 @Parameters(commandNames = "json", commandDescription = "Create json output for d3-flame-graph")
 public class JsonOutputCommand extends JFRToFlameGraphWriterCommand {
 
+    private static final String ALL = "all";
+
     @Parameter(names = {"-l", "--live"}, description = "Export stack trace sample timestamp")
     boolean exportTimestamp = false;
 
@@ -45,7 +47,7 @@ public class JsonOutputCommand extends JFRToFlameGraphWriterCommand {
     /**
      * The data model for json
      */
-    private StackFrame profile = new StackFrame("root");
+    private StackFrame profile = new StackFrame(ALL);
 
     private class LiveRecording {
         Map<Long, StackFrame> profilesMap = new HashMap<>();
