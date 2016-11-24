@@ -27,14 +27,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Create JSON output to be used with d3-flame-graph. This is similar to https://github.com/spiermar/node-stack-convert
+ * Create JSON output to be used with d3-flame-graph. https://github.com/spiermar/d3-flame-graph
+ * <p>
+ * This is similar to https://github.com/spiermar/node-stack-convert
+ * </p>
  */
 @Parameters(commandNames = "json", commandDescription = "Create json output for d3-flame-graph")
 public class JsonOutputCommand extends JFRToFlameGraphWriterCommand {
 
-    private static final String ALL = "all";
+    /**
+     * The bottom of the stack must be "root"
+     */
+    private static final String ROOT = "root";
 
     @Parameter(names = {"-l", "--live"}, description = "Export stack trace sample timestamp")
     boolean exportTimestamp = false;
@@ -47,15 +54,16 @@ public class JsonOutputCommand extends JFRToFlameGraphWriterCommand {
     /**
      * The data model for json
      */
-    private StackFrame profile = new StackFrame(ALL);
+    private StackFrame profile = new StackFrame(ROOT);
 
     private class LiveRecording {
+
         Map<Long, StackFrame> profilesMap = new HashMap<>();
 
         public StackFrame getProfile(long startTimestampSecEpoch) {
             StackFrame profile = profilesMap.get(startTimestampSecEpoch);
             if (profile == null) {
-                profile = new StackFrame("root");
+                profile = new StackFrame(ROOT);
                 profilesMap.put(startTimestampSecEpoch, profile);
             }
             return profile;
@@ -92,7 +100,7 @@ public class JsonOutputCommand extends JFRToFlameGraphWriterCommand {
     protected void processEvent(long startTimestamp, long endTimestamp, long duration, Stack<String> stack) {
         StackFrame frame;
         if (exportTimestamp) {
-            long startTimestampSecEpoch = startTimestamp / 1_000_000_000L;
+            long startTimestampSecEpoch = TimeUnit.NANOSECONDS.toSeconds(startTimestamp);
             frame = liveRecording.getProfile(startTimestampSecEpoch);
         } else {
             frame = profile;
