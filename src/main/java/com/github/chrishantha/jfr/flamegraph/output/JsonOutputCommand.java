@@ -112,11 +112,6 @@ public class JsonOutputCommand extends JFRToFlameGraphWriterCommand {
     }
 
     @Override
-    protected String getDefaultOutputFile() {
-        return "output.json";
-    }
-
-    @Override
     protected void writeOutput(BufferedWriter bufferedWriter) throws IOException {
         Gson gson = new GsonBuilder().create();
         if (exportTimestamp) {

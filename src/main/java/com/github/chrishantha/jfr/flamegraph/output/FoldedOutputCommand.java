@@ -58,11 +58,6 @@ public class FoldedOutputCommand extends JFRToFlameGraphWriterCommand {
     }
 
     @Override
-    protected String getDefaultOutputFile() {
-        return "output.txt";
-    }
-
-    @Override
     protected void writeOutput(BufferedWriter bufferedWriter) throws IOException {
         for (Map.Entry<String, Integer> entry : stackTraceMap.entrySet()) {
             bufferedWriter.write(String.format("%s %d%n", entry.getKey(), entry.getValue()));

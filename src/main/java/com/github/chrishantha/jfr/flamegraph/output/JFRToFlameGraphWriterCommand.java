@@ -31,6 +31,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.Instant;
@@ -68,8 +70,8 @@ public abstract class JFRToFlameGraphWriterCommand {
     @Parameter(names = {"-a", "--hide-arguments"}, description = "Hide arguments in methods")
     boolean hideArguments;
 
-    @Parameter(names = {"-e", "--exit-after-details"}, description = "Exit after printing JFR details")
-    boolean exitAfterJFRDetails;
+    @Parameter(names = {"-j", "--print-jfr-details"}, description = "Print JFR details and exit")
+    boolean printJFRDetails;
 
     @Parameter(names = {"-t", "--print-timestamp"}, description = "Print Timestamp")
     boolean printTimestamp;
@@ -83,8 +85,6 @@ public abstract class JFRToFlameGraphWriterCommand {
 
     protected abstract void processEvent(long startTimestamp, long endTimestamp, long duration,
                                          Stack<String> stack);
-
-    protected abstract String getDefaultOutputFile();
 
     protected abstract void writeOutput(BufferedWriter bufferedWriter) throws IOException;
 
@@ -103,8 +103,8 @@ public abstract class JFRToFlameGraphWriterCommand {
 
         IView view = recording.createView();
 
-        printJFRDetails(recording);
-        if (exitAfterJFRDetails) {
+        if (printJFRDetails) {
+            printJFRDetails(recording);
             return;
         }
 
@@ -120,14 +120,9 @@ public abstract class JFRToFlameGraphWriterCommand {
             }
         }
 
-        if (outputFile == null) {
-            outputFile = new File(getDefaultOutputFile());
-        }
-
-        try (FileWriter fileWriter = new FileWriter(outputFile);
-             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);) {
+        try (Writer writer = outputFile != null ? new FileWriter(outputFile) : new PrintWriter(System.out);
+             BufferedWriter bufferedWriter = new BufferedWriter(writer);) {
             writeOutput(bufferedWriter);
-            System.out.format(PRINT_FORMAT, "Output File", outputFile.getAbsolutePath());
         }
     }
 
