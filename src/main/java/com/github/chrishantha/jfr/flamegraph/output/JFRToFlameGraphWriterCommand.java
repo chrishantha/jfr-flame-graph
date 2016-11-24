@@ -50,28 +50,29 @@ public abstract class JFRToFlameGraphWriterCommand {
     File jfrdump;
 
     @Parameter(names = {"-i", "--ignore-line-numbers"}, description = "Ignore Line Numbers in Stack Frame")
-    boolean ignoreLineNumbers = false;
+    boolean ignoreLineNumbers;
 
     @Parameter(names = {"-o", "--output"}, description = "Output file")
     File outputFile;
 
     @Parameter(names = {"-d", "--decompress"}, description = "Decompress the JFR file")
-    boolean decompress = false;
+    boolean decompress;
 
-    @Parameter(names = {"-r", "--show-return-value"}, description = "Show Return Value for Methods in the Stack")
-    boolean showReturnValue = false;
+    @Parameter(names = {"-r", "--show-return-value"}, description = "Show return value for methods in the stack")
+    boolean showReturnValue;
 
-    @Parameter(names = {"-q", "--use-qualified-names"}, description = "Use Qualified Names in the Stack", arity = 1)
-    boolean useQualifiedNames = true;
+    @Parameter(names = {"-s", "--use-simple-names"},
+            description = "Use simple names instead of qualified names in the stack")
+    boolean useSimpleNames;
 
-    @Parameter(names = {"-a", "--show-arguments"}, description = "Show arguments in Methods", arity = 1)
-    boolean showArguments = true;
+    @Parameter(names = {"-a", "--hide-arguments"}, description = "Hide arguments in methods")
+    boolean hideArguments;
 
     @Parameter(names = {"-e", "--exit-after-details"}, description = "Exit after printing JFR details")
-    boolean exitAfterJFRDetails = false;
+    boolean exitAfterJFRDetails;
 
     @Parameter(names = {"-t", "--print-timestamp"}, description = "Print Timestamp")
-    boolean printTimestamp = false;
+    boolean printTimestamp;
 
     private final String EVENT_TYPE = "Method Profiling Sample";
     private final String EVENT_VALUE_STACK = "(stackTrace)";
@@ -168,8 +169,8 @@ public abstract class JFRToFlameGraphWriterCommand {
     private String getFrameName(IMCFrame frame) {
         StringBuilder methodBuilder = new StringBuilder();
         IMCMethod method = frame.getMethod();
-        methodBuilder.append(method.getHumanReadable(showReturnValue, useQualifiedNames, true, useQualifiedNames,
-                showArguments, useQualifiedNames));
+        methodBuilder.append(method.getHumanReadable(showReturnValue, !useSimpleNames, true, !useSimpleNames,
+                !hideArguments, !useSimpleNames));
         if (!ignoreLineNumbers) {
             methodBuilder.append(":");
             methodBuilder.append(frame.getFrameLineNumber());
