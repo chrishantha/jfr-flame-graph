@@ -74,10 +74,9 @@ public abstract class JFRToFlameGraphWriterCommand {
     @Parameter(names = {"-t", "--print-timestamp"}, description = "Print Timestamp")
     boolean printTimestamp;
 
-    private final String EVENT_TYPE = "Method Profiling Sample";
-    private final String EVENT_VALUE_STACK = "(stackTrace)";
-
-    private final String PRINT_FORMAT = "%-12s: %s%n";
+    private static final String EVENT_TYPE = "Method Profiling Sample";
+    private static final String EVENT_VALUE_STACK = "(stackTrace)";
+    private static final String PRINT_FORMAT = "%-12s: %s%n";
 
     public JFRToFlameGraphWriterCommand() {
     }
