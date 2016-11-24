@@ -22,6 +22,7 @@ import com.jrockit.mc.flightrecorder.FlightRecording;
 import com.jrockit.mc.flightrecorder.FlightRecordingLoader;
 import com.jrockit.mc.flightrecorder.internal.model.FLRStackTrace;
 import com.jrockit.mc.flightrecorder.spi.IEvent;
+import com.jrockit.mc.flightrecorder.spi.ITimeRange;
 import com.jrockit.mc.flightrecorder.spi.IView;
 
 import java.io.BufferedWriter;
@@ -30,7 +31,14 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.MessageFormat;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.Stack;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -59,8 +67,16 @@ public abstract class JFRToFlameGraphWriterCommand {
     @Parameter(names = {"-a", "--show-arguments"}, description = "Show arguments in Methods", arity = 1)
     boolean showArguments = true;
 
+    @Parameter(names = {"-e", "--exit-after-details"}, description = "Exit after printing JFR details")
+    boolean exitAfterJFRDetails = false;
+
+    @Parameter(names = {"-t", "--print-timestamp"}, description = "Print Timestamp")
+    boolean printTimestamp = false;
+
     private final String EVENT_TYPE = "Method Profiling Sample";
     private final String EVENT_VALUE_STACK = "(stackTrace)";
+
+    private final String PRINT_FORMAT = "%-12s: %s%n";
 
     public JFRToFlameGraphWriterCommand() {
     }
@@ -87,6 +103,11 @@ public abstract class JFRToFlameGraphWriterCommand {
 
         IView view = recording.createView();
 
+        printJFRDetails(recording);
+        if (exitAfterJFRDetails) {
+            return;
+        }
+
         for (IEvent event : view) {
             // Filter for Method Profiling Sample Events
             if (EVENT_TYPE.equals(event.getEventType().getName())) {
@@ -106,7 +127,33 @@ public abstract class JFRToFlameGraphWriterCommand {
         try (FileWriter fileWriter = new FileWriter(outputFile);
              BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);) {
             writeOutput(bufferedWriter);
+            System.out.format(PRINT_FORMAT, "Output File", outputFile.getAbsolutePath());
         }
+    }
+
+    private void printJFRDetails(FlightRecording recording) {
+        ITimeRange timeRange = recording.getTimeRange();
+
+        long startTimestamp = TimeUnit.NANOSECONDS.toSeconds(timeRange.getStartTimestamp());
+        long endTimestamp = TimeUnit.NANOSECONDS.toSeconds(timeRange.getEndTimestamp());
+
+        Duration d = Duration.ofNanos(timeRange.getDuration());
+        long hours = d.toHours();
+        long minutes = d.minusHours(hours).toMinutes();
+
+        System.out.println("JFR Details");
+        if (printTimestamp) {
+            System.out.format(PRINT_FORMAT, "Start", startTimestamp);
+            System.out.format(PRINT_FORMAT, "End", endTimestamp);
+        } else {
+            Instant startInstant = Instant.ofEpochSecond(startTimestamp);
+            Instant endInstant = Instant.ofEpochSecond(endTimestamp);
+            DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG)
+                    .withZone(ZoneId.systemDefault());
+            System.out.format(PRINT_FORMAT, "Start", formatter.format(startInstant));
+            System.out.format(PRINT_FORMAT, "End", formatter.format(endInstant));
+        }
+        System.out.format(PRINT_FORMAT, "Duration", MessageFormat.format("{0} h {1} min", hours, minutes));
     }
 
     private Stack<String> getStack(FLRStackTrace flrStackTrace) {
