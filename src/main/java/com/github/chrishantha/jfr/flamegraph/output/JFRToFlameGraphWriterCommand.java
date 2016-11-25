@@ -73,8 +73,14 @@ public abstract class JFRToFlameGraphWriterCommand {
     @Parameter(names = {"-j", "--print-jfr-details"}, description = "Print JFR details and exit")
     boolean printJFRDetails;
 
-    @Parameter(names = {"-t", "--print-timestamp"}, description = "Print Timestamp")
+    @Parameter(names = {"-t", "--print-timestamp"}, description = "Print timestamp in JFR Details")
     boolean printTimestamp;
+
+    @Parameter(names = {"-x", "--start-timestamp"}, description = "Start timestamp in seconds for filtering")
+    long startTimestamp;
+
+    @Parameter(names = {"-y", "--end-timestamp"}, description = "End timestamp in seconds for filtering")
+    long endTimestamp;
 
     private static final String EVENT_TYPE = "Method Profiling Sample";
     private static final String EVENT_VALUE_STACK = "(stackTrace)";
@@ -108,22 +114,51 @@ public abstract class JFRToFlameGraphWriterCommand {
             return;
         }
 
+        // Filter if start or end timestamp is passed as options
+        final boolean filter = startTimestamp > 0 || endTimestamp > 0;
+        startTimestamp = TimeUnit.SECONDS.toNanos(startTimestamp);
+        endTimestamp = TimeUnit.SECONDS.toNanos(endTimestamp);
+
+        long processedEvents = 0;
+
         for (IEvent event : view) {
             // Filter for Method Profiling Sample Events
             if (EVENT_TYPE.equals(event.getEventType().getName())) {
+                long eventStartTimestamp = event.getStartTimestamp();
+                long eventEndTimestamp = event.getEndTimestamp();
+
+                if (filter && !filter(eventStartTimestamp, eventEndTimestamp)) {
+                    continue;
+                }
+
                 // Get Stack Trace from the event. Field ID was identified from
                 // event.getEventType().getFieldIdentifiers()
                 FLRStackTrace flrStackTrace = (FLRStackTrace) event.getValue(EVENT_VALUE_STACK);
                 Stack<String> stack = getStack(flrStackTrace);
 
-                processEvent(event.getStartTimestamp(), event.getEndTimestamp(), event.getDuration(), stack);
+                processEvent(eventStartTimestamp, eventEndTimestamp, event.getDuration(), stack);
+                processedEvents++;
             }
+        }
+
+        if (processedEvents == 0) {
+            System.err.println("There are no method profiling sample events");
+            System.exit(1);
         }
 
         try (Writer writer = outputFile != null ? new FileWriter(outputFile) : new PrintWriter(System.out);
              BufferedWriter bufferedWriter = new BufferedWriter(writer);) {
             writeOutput(bufferedWriter);
         }
+    }
+
+    private boolean filter(long eventStartTimestamp, long eventEndTimestamp) {
+        if (eventStartTimestamp >= startTimestamp && eventStartTimestamp <= endTimestamp) {
+            return true;
+        } else if (eventEndTimestamp >= startTimestamp && eventEndTimestamp <= endTimestamp) {
+            return true;
+        }
+        return false;
     }
 
     private void printJFRDetails(FlightRecording recording) {
