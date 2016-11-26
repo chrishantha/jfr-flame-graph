@@ -17,7 +17,6 @@
 # Create multiple flame graphs
 # ----------------------------------------------------------------------------
 set -e
-#set -x
 
 JFG_DIR=$(dirname "$0")
 
@@ -87,8 +86,8 @@ details=$(${JFG_DIR}/flamegraph-output.sh folded -f $jfr_file -j -t)
 
 echo "$details"
 
-startTimestamp=$(echo $details | sed -r 's/.*Start : ([0-9]*).*/\1/')
-endTimestamp=$(echo $details | sed -r 's/.*End : ([0-9]*).*/\1/')
+startTimestamp=$(echo $details | sed -r 's/.*Min Start Event\s*: ([0-9]*).*/\1/')
+endTimestamp=$(echo $details | sed -r 's/.*Max End Event\s*: ([0-9]*).*/\1/')
 
 interval=$(($minutes * 60))
 

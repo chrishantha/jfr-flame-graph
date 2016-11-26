@@ -84,7 +84,8 @@ public abstract class JFRToFlameGraphWriterCommand {
 
     private static final String EVENT_TYPE = "Method Profiling Sample";
     private static final String EVENT_VALUE_STACK = "(stackTrace)";
-    private static final String PRINT_FORMAT = "%-12s: %s%n";
+    private static final String PRINT_FORMAT = "%-16s: %s%n";
+    private static final String DURATION_FORMAT = "{0} h {1} min";
 
     public JFRToFlameGraphWriterCommand() {
     }
@@ -171,19 +172,55 @@ public abstract class JFRToFlameGraphWriterCommand {
         long hours = d.toHours();
         long minutes = d.minusHours(hours).toMinutes();
 
+        IView view = recording.createView();
+
+        long minEventStartTimestamp = Long.MAX_VALUE;
+        long maxEventEndTimestamp = 0;
+
+        for (IEvent event : view) {
+            if (EVENT_TYPE.equals(event.getEventType().getName())) {
+                long eventStartTimestamp = event.getStartTimestamp();
+                long eventEndTimestamp = event.getEndTimestamp();
+                if (eventStartTimestamp < minEventStartTimestamp) {
+                    // Setting min event start
+                    minEventStartTimestamp = eventStartTimestamp;
+                }
+
+                if (eventEndTimestamp > maxEventEndTimestamp) {
+                    // Setting max event end
+                    maxEventEndTimestamp = eventEndTimestamp;
+                }
+            }
+        }
+
+        Duration eventsDuration = Duration.ofNanos(maxEventEndTimestamp - minEventStartTimestamp);
+        long eventHours = eventsDuration.toHours();
+        long eventMinutes = eventsDuration.minusHours(eventHours).toMinutes();
+
+        minEventStartTimestamp = TimeUnit.NANOSECONDS.toSeconds(minEventStartTimestamp);
+        maxEventEndTimestamp = TimeUnit.NANOSECONDS.toSeconds(maxEventEndTimestamp);
+
         System.out.println("JFR Details");
         if (printTimestamp) {
             System.out.format(PRINT_FORMAT, "Start", startTimestamp);
             System.out.format(PRINT_FORMAT, "End", endTimestamp);
+            System.out.format(PRINT_FORMAT, "Min Start Event", minEventStartTimestamp);
+            System.out.format(PRINT_FORMAT, "Max End Event", maxEventEndTimestamp);
         } else {
             Instant startInstant = Instant.ofEpochSecond(startTimestamp);
             Instant endInstant = Instant.ofEpochSecond(endTimestamp);
+            Instant minStartInstant = Instant.ofEpochSecond(minEventStartTimestamp);
+            Instant maxEndInstant = Instant.ofEpochSecond(maxEventEndTimestamp);
             DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG)
                     .withZone(ZoneId.systemDefault());
             System.out.format(PRINT_FORMAT, "Start", formatter.format(startInstant));
             System.out.format(PRINT_FORMAT, "End", formatter.format(endInstant));
+            System.out.format(PRINT_FORMAT, "Min Start Event", formatter.format(minStartInstant));
+            System.out.format(PRINT_FORMAT, "Max End Event", formatter.format(maxEndInstant));
         }
-        System.out.format(PRINT_FORMAT, "Duration", MessageFormat.format("{0} h {1} min", hours, minutes));
+        System.out.format(PRINT_FORMAT, "JFR Duration", MessageFormat.format(DURATION_FORMAT, hours, minutes));
+        System.out.format(PRINT_FORMAT, "Events Duration", MessageFormat.format(DURATION_FORMAT, eventHours,
+                eventMinutes));
     }
 
     private Stack<String> getStack(FLRStackTrace flrStackTrace) {
