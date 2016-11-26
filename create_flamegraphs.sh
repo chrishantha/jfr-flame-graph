@@ -99,9 +99,6 @@ dateformat="%Y-%m-%d %I:%M:%S %p"
 
 set +e
 
-# All Output Files
-output_files
-
 while [ $i -lt $end ]; do
     s=$i
     i=$(($i+$interval))
@@ -115,18 +112,73 @@ while [ $i -lt $end ]; do
 
     echo Generating $title
 
-    output_file=$output_dir/flamegraph-$s-$e.svg
+    output_file=flamegraph-$s-$e.svg
 
     # Use folded command
     ${JFG_DIR}/flamegraph-output.sh folded -f $jfr_file -x $s -y $e | \
     $FLAMEGRAPH_DIR/flamegraph.pl --title "$title" --width 1600 \
-    > $output_file
+    > $output_dir/$output_file
 
     flamegraph_status=("${PIPESTATUS[@]}")
     if [ ${flamegraph_status[1]} -eq 0 ]
     then
+        # Create array
         output_files+=($output_file)
     else
-        rm $output_file
+        rm $output_dir/$output_file
     fi
 done
+
+#Generate HTML
+index_file=$output_dir/index.html
+
+cat << _EOF_ > $index_file
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Flame Graphs</title>
+</head>
+<body>
+
+<div>
+    <button onclick="plusDivs(-1)">Previous</button>
+    <button onclick="plusDivs(1)">Next</button>
+_EOF_
+for f in "${output_files[@]}"
+do
+	echo "<object class=\"flamegraph\" data=\"$f\" type=\"image/svg+xml\" style=\"display: none\"></object>" >> $index_file
+done
+cat << _EOF_ >> $index_file
+</div>
+
+<script>
+    var slideIndex = 1;
+    showDivs(slideIndex);
+
+    function plusDivs(n) {
+        showDivs(slideIndex += n);
+    }
+
+    function showDivs(n) {
+        var i;
+        var x = document.getElementsByClassName("flamegraph");
+        if (n > x.length) {
+            slideIndex = 1
+        }
+        if (n < 1) {
+            slideIndex = x.length
+        }
+        for (i = 0; i < x.length; i++) {
+            x[i].style.display = "none";
+        }
+        x[slideIndex - 1].style.display = "block";
+    }
+</script>
+
+</body>
+</html>
+_EOF_
+
+echo Script executed in $SECONDS seconds.
