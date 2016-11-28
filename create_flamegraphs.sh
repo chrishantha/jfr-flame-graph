@@ -32,8 +32,10 @@ function help {
     echo ""
     echo "Options:"
     echo "-f: JFR file"
+    echo "-d: Decompress the JFR file"
     echo "-m: Interval in minutes. Default 10"
     echo "-o: Output Directory. Default \"Output\""
+    echo "-i: Ignore line numbers"
     echo ""
 }
 
@@ -43,11 +45,14 @@ output_dir=""
 decompress=""
 ignore_lines=""
 
-while getopts "df:m:o:airs" opts
+while getopts "df:m:i" opts
 do
   case $opts in
     f)
         jfr_file=${OPTARG}
+        ;;
+    d)
+        decompress="-d"
         ;;
     m)
         minutes=${OPTARG}
@@ -114,7 +119,7 @@ while [ $i -lt $end ]; do
     output_file=flamegraph-$s-$e.svg
 
     # Use folded command
-    ${JFG_DIR}/flamegraph-output.sh folded -f $jfr_file -x $s -y $e | \
+    ${JFG_DIR}/flamegraph-output.sh folded $decompress -f $jfr_file -x $s -y $e $ignore_lines | \
     $FLAMEGRAPH_DIR/flamegraph.pl --title "$title" --width 1600 \
     > $output_dir/$output_file
 
