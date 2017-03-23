@@ -26,69 +26,112 @@ Run `install-mc-jars.sh` script.
 
 Run `mvn clean install -U`.
 
-## How to run
+## Clone FlameGraph repository
 
-After building, you can just run the JAR file. There is a helper script named `flamegraph-output.sh` to run the jar file.
+Clone [Brendan]'s [FlameGraph] repository and set the environment variable `FLAMEGRAPH_DIR` to FlameGraph directory
 
-For example:
+[Brendan]: http://www.brendangregg.com/bio.html
 
 ```
-./flamegraph-output.sh folded -f /tmp/highcpu.jfr -o /tmp/output.txt
-```
-
-Following are the options available.
-```
-$ ./flamegraph-output.sh -h
-Usage: Application [options] [command] [command options]
-  Options:
-    -h, --help
-      Display Help
-      Default: false
-  Commands:
-    folded      Create folded output
-      Usage: folded [options]
-        Options:
-          -d, --decompress
-            Decompress the JFR file
-            Default: false
-          -i, --ignore-line-numbers
-            Ignore Line Numbers in Stack Frame
-            Default: false
-        * -f, --jfrdump
-            Java Flight Recorder Dump
-          -o, --output
-            Output file
-
-    json      Create json output for d3-flame-graph
-      Usage: json [options]
-        Options:
-          -d, --decompress
-            Decompress the JFR file
-            Default: false
-          -i, --ignore-line-numbers
-            Ignore Line Numbers in Stack Frame
-            Default: false
-        * -f, --jfrdump
-            Java Flight Recorder Dump
-          -l, --live
-            Export stack trace sample timestamp
-            Default: false
-          -o, --output
-            Output file
+git clone https://github.com/brendangregg/FlameGraph.git
+export FLAMEGRAPH_DIR=/path/to/FlameGraph
 ```
 
 ## How to generate a Flame Graph
 
-Clone [Brendan]'s [FlameGraph] repository, generate FlameGraph using `flamegraph.pl` and open the SVG file in your web browser.
+There are helper scripts, to generate the flame graphs.
+
+For example:
 
 ```
-git clone https://github.com/brendangregg/FlameGraph.git
-cd FlameGraph
-cat /tmp/output.txt | ./flamegraph.pl > ../traces-highcpu.svg
-firefox ../traces-highcpu.svg
+./create_flamegraph.sh -f /tmp/highcpu.jfr -i > flamegraph.svg
 ```
+Open the SVG file in your web browser.
 
-[Brendan]: http://www.brendangregg.com/bio.html
+Use -h with scripts to see the available options.
+
+For example:
+```
+$ ./flamegraph-output.sh -h
+  Usage: Application [options] [command] [command options]
+    Options:
+      -h, --help
+        Display Help
+        Default: false
+    Commands:
+      folded      Create folded output
+        Usage: folded [options]
+          Options:
+            -d, --decompress
+              Decompress the JFR file
+              Default: false
+            -y, --end-timestamp
+              End timestamp in seconds for filtering
+              Default: 0
+            -a, --hide-arguments
+              Hide arguments in methods
+              Default: false
+            -i, --ignore-line-numbers
+              Ignore Line Numbers in Stack Frame
+              Default: false
+          * -f, --jfrdump
+              Java Flight Recorder Dump
+            -o, --output
+              Output file
+            -j, --print-jfr-details
+              Print JFR details and exit
+              Default: false
+            -t, --print-timestamp
+              Print timestamp in JFR Details
+              Default: false
+            -r, --show-return-value
+              Show return value for methods in the stack
+              Default: false
+            -x, --start-timestamp
+              Start timestamp in seconds for filtering
+              Default: 0
+            -s, --use-simple-names
+              Use simple names instead of qualified names in the stack
+              Default: false
+  
+      json      Create json output for d3-flame-graph
+        Usage: json [options]
+          Options:
+            -d, --decompress
+              Decompress the JFR file
+              Default: false
+            -y, --end-timestamp
+              End timestamp in seconds for filtering
+              Default: 0
+            -a, --hide-arguments
+              Hide arguments in methods
+              Default: false
+            -i, --ignore-line-numbers
+              Ignore Line Numbers in Stack Frame
+              Default: false
+          * -f, --jfrdump
+              Java Flight Recorder Dump
+            -l, --live
+              Export stack trace sample timestamp
+              Default: false
+            -o, --output
+              Output file
+            -j, --print-jfr-details
+              Print JFR details and exit
+              Default: false
+            -t, --print-timestamp
+              Print timestamp in JFR Details
+              Default: false
+            -r, --show-return-value
+              Show return value for methods in the stack
+              Default: false
+            -x, --start-timestamp
+              Start timestamp in seconds for filtering
+              Default: 0
+            -s, --use-simple-names
+              Use simple names instead of qualified names in the stack
+              Default: false
+```
 
 ## License
 
