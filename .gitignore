@@ -35,6 +35,3 @@ repo/
 #Local Flame Graphs
 *.svg
 
-#Default Output Directory
-output/
-
