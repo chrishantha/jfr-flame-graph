@@ -31,3 +31,10 @@ jmc_version.properties
 
 #Local Repo
 repo/
+
+#Local Flame Graphs
+*.svg
+
+#Default Output Directory
+output/
+
