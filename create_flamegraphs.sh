@@ -45,7 +45,7 @@ output_dir=""
 decompress=""
 ignore_lines=""
 
-while getopts "df:m:i" opts
+while getopts "df:m:io:" opts
 do
   case $opts in
     f)
@@ -59,6 +59,9 @@ do
         ;;
     i)
         ignore_lines="-i"
+        ;;
+    o)
+        output_dir=${OPTARG}
         ;;
     \?)
         help
@@ -74,7 +77,7 @@ if [[ ! -f $jfr_file ]]; then
 fi
 
 #If no directory was provided, we need to create the default one
-if [[ ! -d $java_dir ]]; then
+if [[ ! -d $output_dir ]]; then
     output_dir="output"
     mkdir -p $output_dir
 fi
