@@ -134,7 +134,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>4.12</junit.version>
-        <jcommander.version>1.58</jcommander.version>
-        <jmc.version>5.5.0.165303</jmc.version>
+        <jcommander.version>1.69</jcommander.version>
+        <jmc.version>5.5.1.172852</jmc.version>
     </properties>
 </project>
