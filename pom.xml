@@ -14,8 +14,7 @@
     # See the License for the specific language governing permissions and
     # limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
         <groupId>org.apache</groupId>
@@ -27,7 +26,7 @@
 
     <groupId>com.github.chrishantha.jfr</groupId>
     <artifactId>flamegraph-output</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.2</version>
     <packaging>jar</packaging>
 
     <name>flamegraph-output</name>
@@ -50,7 +49,7 @@
         <url>https://github.com/chrishantha/jfr-flame-graph.git</url>
         <developerConnection>scm:git:https://github.com/chrishantha/jfr-flame-graph.git</developerConnection>
         <connection>scm:git:https://github.com/chrishantha/jfr-flame-graph.git</connection>
-        <tag>HEAD</tag>
+        <tag>v0.0.2</tag>
     </scm>
 
     <dependencies>
