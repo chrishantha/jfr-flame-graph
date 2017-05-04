@@ -15,18 +15,12 @@
  */
 package com.github.chrishantha.jfr.flamegraph.output;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,16 +29,12 @@ import java.util.concurrent.TimeUnit;
  * This is similar to https://github.com/spiermar/node-stack-convert
  * </p>
  */
-@Parameters(commandNames = "json", commandDescription = "Create json output for d3-flame-graph")
-public class JsonOutputCommand extends JFRToFlameGraphWriterCommand {
+public class JsonOutputWriter implements FlameGraphOutputWriter {
 
     /**
      * The bottom of the stack must be "root"
      */
     private static final String ROOT = "root";
-
-    @Parameter(names = {"-l", "--live"}, description = "Export stack trace sample timestamp")
-    boolean exportTimestamp = false;
 
     /**
      * The data model for live json
@@ -55,6 +45,8 @@ public class JsonOutputCommand extends JFRToFlameGraphWriterCommand {
      * The data model for json
      */
     private StackFrame profile = new StackFrame(ROOT);
+
+    private boolean exportTimestamp;
 
     private class LiveRecording {
 
@@ -97,7 +89,12 @@ public class JsonOutputCommand extends JFRToFlameGraphWriterCommand {
     }
 
     @Override
-    protected void processEvent(long startTimestamp, long endTimestamp, long duration, Stack<String> stack) {
+    public void initialize(OutputWriterParameters parameters) {
+        exportTimestamp = parameters.live;
+    }
+
+    @Override
+    public void processEvent(long startTimestamp, long endTimestamp, long duration, Stack<String> stack) {
         StackFrame frame;
         if (exportTimestamp) {
             long startTimestampSecEpoch = TimeUnit.NANOSECONDS.toSeconds(startTimestamp);
@@ -112,7 +109,7 @@ public class JsonOutputCommand extends JFRToFlameGraphWriterCommand {
     }
 
     @Override
-    protected void writeOutput(BufferedWriter bufferedWriter) throws IOException {
+    public void writeOutput(BufferedWriter bufferedWriter) throws IOException {
         Gson gson = new GsonBuilder().create();
         if (exportTimestamp) {
             gson.toJson(this.liveRecording.profilesMap, bufferedWriter);

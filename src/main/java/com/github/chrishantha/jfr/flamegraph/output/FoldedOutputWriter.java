@@ -15,8 +15,6 @@
  */
 package com.github.chrishantha.jfr.flamegraph.output;
 
-import com.beust.jcommander.Parameters;
-
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -26,8 +24,7 @@ import java.util.Stack;
 /**
  * Create folded output to be used with flamegraph.pl
  */
-@Parameters(commandDescription = "Create folded output")
-public class FoldedOutputCommand extends JFRToFlameGraphWriterCommand {
+public class FoldedOutputWriter implements FlameGraphOutputWriter {
 
     /**
      * The data model for folded stacks
@@ -35,7 +32,11 @@ public class FoldedOutputCommand extends JFRToFlameGraphWriterCommand {
     private final Map<String, Integer> stackTraceMap = new LinkedHashMap<>();
 
     @Override
-    protected void processEvent(long startTimestamp, long endTimestamp, long duration, Stack<String> stack) {
+    public void initialize(OutputWriterParameters parameters) {
+    }
+
+    @Override
+    public void processEvent(long startTimestamp, long endTimestamp, long duration, Stack<String> stack) {
         // StringBuilder to keep stack trace
         StringBuilder stackTraceBuilder = new StringBuilder();
         boolean appendSemicolon = false;
@@ -58,7 +59,7 @@ public class FoldedOutputCommand extends JFRToFlameGraphWriterCommand {
     }
 
     @Override
-    protected void writeOutput(BufferedWriter bufferedWriter) throws IOException {
+    public void writeOutput(BufferedWriter bufferedWriter) throws IOException {
         for (Map.Entry<String, Integer> entry : stackTraceMap.entrySet()) {
             bufferedWriter.write(String.format("%s %d%n", entry.getKey(), entry.getValue()));
         }

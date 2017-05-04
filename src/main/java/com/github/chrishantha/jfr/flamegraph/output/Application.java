@@ -16,30 +16,21 @@
 package com.github.chrishantha.jfr.flamegraph.output;
 
 import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 
 import java.io.IOException;
 
 public class Application {
 
-    @Parameter(names = {"-h", "--help"}, description = "Display Help")
-    private boolean help = false;
-
-    private static final String FOLDED_OUTPUT_COMMAND = "folded";
-
-    private static final String JSON_OUTPUT_COMMAND = "json";
-
     public static void main(String[] args) {
-        Application application = new Application();
-        final JCommander jcmdr = new JCommander(application);
-        jcmdr.setProgramName(Application.class.getSimpleName());
+        final JCommander jcmdr = new JCommander();
+        jcmdr.setProgramName(JFRToFlameGraphWriter.class.getSimpleName());
 
-        // Add commands
-        FoldedOutputCommand foldedOutputCommand = new FoldedOutputCommand();
-        jcmdr.addCommand(FOLDED_OUTPUT_COMMAND, foldedOutputCommand);
-        JsonOutputCommand jsonOutputCommand = new JsonOutputCommand();
-        jcmdr.addCommand(JSON_OUTPUT_COMMAND, jsonOutputCommand);
+        OutputWriterParameters parameters = new OutputWriterParameters();
+        JFRToFlameGraphWriter jfrToFlameGraphWriter = new JFRToFlameGraphWriter(parameters);
+
+        jcmdr.addObject(parameters);
+        jcmdr.addObject(jfrToFlameGraphWriter);
 
         try {
             jcmdr.parse(args);
@@ -48,21 +39,13 @@ public class Application {
             return;
         }
 
-        if (application.help) {
+        if (jfrToFlameGraphWriter.help) {
             jcmdr.usage();
             return;
         }
 
         try {
-            String command = jcmdr.getParsedCommand();
-            if (FOLDED_OUTPUT_COMMAND.equals(command)) {
-                foldedOutputCommand.process();
-            } else if (JSON_OUTPUT_COMMAND.equals(command)) {
-                jsonOutputCommand.process();
-            } else {
-                jcmdr.usage();
-                return;
-            }
+            jfrToFlameGraphWriter.process();
         } catch (IOException e) {
             System.err.println(e.getMessage());
         }

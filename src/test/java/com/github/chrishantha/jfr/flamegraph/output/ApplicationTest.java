@@ -28,30 +28,13 @@ import java.io.IOException;
  */
 public class ApplicationTest extends TestCase {
 
-    private Application application;
-
-    private FoldedOutputCommand foldedOutputCommand;
-
-    private JsonOutputCommand jsonOutputCommand;
-
-    private static final String FOLDED_OUTPUT_COMMAND = "folded";
-
-    private static final String JSON_OUTPUT_COMMAND = "json";
+    private OutputWriterParameters parameters;
+    private JFRToFlameGraphWriter jfrToFlameGraphWriter;
 
     @Override
     protected void setUp() throws Exception {
-        application = new Application();
-        foldedOutputCommand = new FoldedOutputCommand();
-        jsonOutputCommand = new JsonOutputCommand();
-    }
-
-    /**
-     * Create the test case
-     *
-     * @param testName name of the test case
-     */
-    public ApplicationTest(String testName) {
-        super(testName);
+        parameters = new OutputWriterParameters();
+        jfrToFlameGraphWriter = new JFRToFlameGraphWriter(parameters);
     }
 
     /**
@@ -61,44 +44,33 @@ public class ApplicationTest extends TestCase {
         return new TestSuite(ApplicationTest.class);
     }
 
-    private void parseCommands(JFRToFlameGraphWriterCommand jfrToFlameGraphWriterCommand,
-                               String commandName, String[] args) {
+    private void parseCommands(String[] args) {
         JCommander jc = new JCommander();
-        jc.addObject(application);
-        jc.addCommand(commandName, jfrToFlameGraphWriterCommand);
+        jc.addObject(jfrToFlameGraphWriter);
+        jc.addObject(parameters);
         jc.parse(args);
-        assertEquals(commandName, jc.getParsedCommand());
     }
 
-    private void testJFRToFlameGraphWriterCommand(JFRToFlameGraphWriterCommand jfrToFlameGraphWriterCommand,
-                                                  String commandName) throws IOException {
+    public void testJFRToFlameGraphWriterOutputFile() throws IOException {
         File tmp = File.createTempFile(getClass().getName(), "");
-        String[] args = {commandName, "-f", tmp.toString(), "-o", tmp.toString()};
-        parseCommands(jfrToFlameGraphWriterCommand, commandName, args);
+        String[] args = {"-f", tmp.toString(), "-o", tmp.toString()};
+        parseCommands(args);
         assertTrue(tmp.exists());
-        assertEquals(tmp, jfrToFlameGraphWriterCommand.jfrdump);
-        assertEquals(tmp, jfrToFlameGraphWriterCommand.outputFile);
-        assertFalse(jfrToFlameGraphWriterCommand.ignoreLineNumbers);
-    }
-
-    public void testFoldedOutputCommandOptions() throws IOException {
-        testJFRToFlameGraphWriterCommand(foldedOutputCommand, FOLDED_OUTPUT_COMMAND);
-    }
-
-    public void testJsonOutputCommandOptions() throws IOException {
-        testJFRToFlameGraphWriterCommand(jsonOutputCommand, JSON_OUTPUT_COMMAND);
+        assertEquals(tmp, jfrToFlameGraphWriter.jfrdump);
+        assertEquals(tmp, jfrToFlameGraphWriter.outputFile);
+        assertFalse(jfrToFlameGraphWriter.ignoreLineNumbers);
     }
 
     public void testIgnoreLineNumbersOption() throws IOException {
-        String[] args = {FOLDED_OUTPUT_COMMAND, "-f", "temp", "-i"};
-        parseCommands(foldedOutputCommand, FOLDED_OUTPUT_COMMAND, args);
-        assertTrue(foldedOutputCommand.ignoreLineNumbers);
+        String[] args = {"-f", "temp", "-i"};
+        parseCommands(args);
+        assertTrue(jfrToFlameGraphWriter.ignoreLineNumbers);
     }
 
     public void testLiveOption() throws IOException {
-        String[] args = {JSON_OUTPUT_COMMAND, "-f", "temp", "-l"};
-        parseCommands(jsonOutputCommand, JSON_OUTPUT_COMMAND, args);
-        assertTrue(jsonOutputCommand.exportTimestamp);
+        String[] args = {"-f", "temp", "-l"};
+        parseCommands(args);
+        assertTrue(parameters.live);
     }
 
 }

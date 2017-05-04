@@ -25,14 +25,7 @@ import com.jrockit.mc.flightrecorder.spi.IEvent;
 import com.jrockit.mc.flightrecorder.spi.ITimeRange;
 import com.jrockit.mc.flightrecorder.spi.IView;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Writer;
+import java.io.*;
 import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.Instant;
@@ -46,13 +39,16 @@ import java.util.zip.GZIPInputStream;
 /**
  * Parse JFR dump and create a compatible output for Flame Graph
  */
-public abstract class JFRToFlameGraphWriterCommand {
+public final class JFRToFlameGraphWriter {
+
+    @Parameter(names = {"-h", "--help"}, description = "Display Help", help = true)
+    boolean help;
 
     @Parameter(names = {"-f", "--jfrdump"}, description = "Java Flight Recorder Dump", required = true)
     File jfrdump;
 
-    @Parameter(names = {"-i", "--ignore-line-numbers"}, description = "Ignore Line Numbers in Stack Frame")
-    boolean ignoreLineNumbers;
+    @Parameter(names = {"-ot", "--output-type"}, description = "Output type")
+    OutputType outputType = OutputType.FOLDED;
 
     @Parameter(names = {"-o", "--output"}, description = "Output file")
     File outputFile;
@@ -60,14 +56,17 @@ public abstract class JFRToFlameGraphWriterCommand {
     @Parameter(names = {"-d", "--decompress"}, description = "Decompress the JFR file")
     boolean decompress;
 
-    @Parameter(names = {"-r", "--show-return-value"}, description = "Show return value for methods in the stack")
+    @Parameter(names = {"-i", "--ignore-line-numbers"}, description = "Ignore Line Numbers in Stack Frame")
+    boolean ignoreLineNumbers;
+
+    @Parameter(names = {"-rv", "--show-return-value"}, description = "Show return value for methods in the stack")
     boolean showReturnValue;
 
-    @Parameter(names = {"-s", "--use-simple-names"},
+    @Parameter(names = {"-sn", "--use-simple-names"},
             description = "Use simple names instead of qualified names in the stack")
     boolean useSimpleNames;
 
-    @Parameter(names = {"-a", "--hide-arguments"}, description = "Hide arguments in methods")
+    @Parameter(names = {"-ha", "--hide-arguments"}, description = "Hide arguments in methods")
     boolean hideArguments;
 
     @Parameter(names = {"-j", "--print-jfr-details"}, description = "Print JFR details and exit")
@@ -76,10 +75,10 @@ public abstract class JFRToFlameGraphWriterCommand {
     @Parameter(names = {"-t", "--print-timestamp"}, description = "Print timestamp in JFR Details")
     boolean printTimestamp;
 
-    @Parameter(names = {"-x", "--start-timestamp"}, description = "Start timestamp in seconds for filtering")
+    @Parameter(names = {"-st", "--start-timestamp"}, description = "Start timestamp in seconds for filtering")
     long startTimestamp;
 
-    @Parameter(names = {"-y", "--end-timestamp"}, description = "End timestamp in seconds for filtering")
+    @Parameter(names = {"-et", "--end-timestamp"}, description = "End timestamp in seconds for filtering")
     long endTimestamp;
 
     private static final String EVENT_TYPE = "Method Profiling Sample";
@@ -87,13 +86,9 @@ public abstract class JFRToFlameGraphWriterCommand {
     private static final String PRINT_FORMAT = "%-16s: %s%n";
     private static final String DURATION_FORMAT = "{0} h {1} min";
 
-    public JFRToFlameGraphWriterCommand() {
+    public JFRToFlameGraphWriter(OutputWriterParameters parameters) {
+        outputType.getFlameGraphOutputWriter().initialize(parameters);
     }
-
-    protected abstract void processEvent(long startTimestamp, long endTimestamp, long duration,
-                                         Stack<String> stack);
-
-    protected abstract void writeOutput(BufferedWriter bufferedWriter) throws IOException;
 
     public void process() throws IOException {
         FlightRecording recording;
@@ -120,6 +115,8 @@ public abstract class JFRToFlameGraphWriterCommand {
         startTimestamp = TimeUnit.SECONDS.toNanos(startTimestamp);
         endTimestamp = TimeUnit.SECONDS.toNanos(endTimestamp);
 
+        FlameGraphOutputWriter flameGraphOutputWriter = outputType.getFlameGraphOutputWriter();
+
         long processedEvents = 0;
 
         for (IEvent event : view) {
@@ -137,7 +134,7 @@ public abstract class JFRToFlameGraphWriterCommand {
                 FLRStackTrace flrStackTrace = (FLRStackTrace) event.getValue(EVENT_VALUE_STACK);
                 Stack<String> stack = getStack(flrStackTrace);
 
-                processEvent(eventStartTimestamp, eventEndTimestamp, event.getDuration(), stack);
+                flameGraphOutputWriter.processEvent(eventStartTimestamp, eventEndTimestamp, event.getDuration(), stack);
                 processedEvents++;
             }
         }
@@ -149,7 +146,7 @@ public abstract class JFRToFlameGraphWriterCommand {
 
         try (Writer writer = outputFile != null ? new FileWriter(outputFile) : new PrintWriter(System.out);
              BufferedWriter bufferedWriter = new BufferedWriter(writer);) {
-            writeOutput(bufferedWriter);
+            flameGraphOutputWriter.writeOutput(bufferedWriter);
         }
     }
 
