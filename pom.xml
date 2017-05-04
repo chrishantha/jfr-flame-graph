@@ -26,7 +26,7 @@
 
     <groupId>com.github.chrishantha.jfr</groupId>
     <artifactId>flamegraph-output</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.3-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>flamegraph-output</name>
@@ -49,7 +49,7 @@
         <url>https://github.com/chrishantha/jfr-flame-graph.git</url>
         <developerConnection>scm:git:https://github.com/chrishantha/jfr-flame-graph.git</developerConnection>
         <connection>scm:git:https://github.com/chrishantha/jfr-flame-graph.git</connection>
-        <tag>v0.0.2</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <dependencies>
