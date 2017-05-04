@@ -35,3 +35,5 @@ repo/
 #Local Flame Graphs
 *.svg
 
+#Generated pom.xml
+dependency-reduced-pom.xml
