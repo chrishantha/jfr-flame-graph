@@ -36,6 +36,7 @@ function help {
     echo "-m: Interval in minutes. Default 10"
     echo "-o: Output Directory. Default \"Output\""
     echo "-i: Ignore line numbers"
+    echo "-s: Save folded output"
     echo ""
 }
 
@@ -44,8 +45,9 @@ minutes=10
 output_dir=""
 decompress=""
 ignore_lines=""
+save_folded_output=false
 
-while getopts "df:m:io:" opts
+while getopts "df:m:io:s" opts
 do
   case $opts in
     f)
@@ -62,6 +64,9 @@ do
         ;;
     o)
         output_dir=${OPTARG}
+        ;;
+    s)
+        save_folded_output=true
         ;;
     \?)
         help
@@ -90,7 +95,7 @@ fi
 
 jfr_filename=$(basename $jfr_file)
 
-details=$(${JFG_DIR}/flamegraph-output.sh -ot folded -f $jfr_file -j -t)
+details=$(${JFG_DIR}/flamegraph-output.sh -ot folded $decompress -f $jfr_file -j -t)
 
 echo "$details"
 
@@ -115,16 +120,24 @@ while [ $i -lt $end ]; do
         e=$end
     fi
 
-    title=$(echo Flame Graph for $jfr_filename from $(date --date @$s +"$dateformat") to $(date --date @$e +"$dateformat"))
+    title="Flame Graph for $jfr_filename from $(date --date @$s +"$dateformat") to $(date --date @$e +"$dateformat")"
 
     echo Generating $title
 
     output_file=flamegraph-$s-$e.svg
 
     # Use folded output type
-    ${JFG_DIR}/flamegraph-output.sh -ot folded $decompress -f $jfr_file -st $s -et $e $ignore_lines | \
-    $FLAMEGRAPH_DIR/flamegraph.pl --title "$title" --width 1600 \
-    > $output_dir/$output_file
+    flamegraph_output_command="${JFG_DIR}/flamegraph-output.sh"
+    flamegraph_output_args=(-ot folded $decompress -f $jfr_file -st $s -et $e $ignore_lines)
+    framegraph_generate_command="$FLAMEGRAPH_DIR/flamegraph.pl"
+    framegraph_generate_args=(--title "$title" --width 1600)
+
+    if [[ "$save_folded_output" = true ]]; then
+        $($flamegraph_output_command "${flamegraph_output_args[@]}" > $output_dir/$output_file.folded)
+        cat $output_dir/$output_file.folded | $framegraph_generate_command "${framegraph_generate_args[@]}" > $output_dir/$output_file
+    else
+        $flamegraph_output_command "${flamegraph_output_args[@]}" | $framegraph_generate_command "${framegraph_generate_args[@]}" > $output_dir/$output_file
+    fi
 
     flamegraph_status=("${PIPESTATUS[@]}")
     if [ ${flamegraph_status[1]} -eq 0 ]
