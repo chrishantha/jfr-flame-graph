@@ -90,7 +90,7 @@ public final class JFRToFlameGraphWriter {
         outputType.getFlameGraphOutputWriter().initialize(parameters);
     }
 
-    public void process() throws IOException {
+    public void process() throws Exception {
         FlightRecording recording;
         try {
             recording = FlightRecordingLoader.loadFile(decompress ? decompressFile(jfrdump) : jfrdump);
@@ -99,8 +99,7 @@ public final class JFRToFlameGraphWriter {
             if (!decompress) {
                 System.err.println("If the JFR file is compressed, try the decompress option");
             }
-            e.printStackTrace();
-            return;
+            throw e;
         }
 
         IView view = recording.createView();

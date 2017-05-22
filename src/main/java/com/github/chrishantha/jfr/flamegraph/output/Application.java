@@ -22,7 +22,7 @@ import java.io.IOException;
 
 public class Application {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         final JCommander jcmdr = new JCommander();
         jcmdr.setProgramName(JFRToFlameGraphWriter.class.getSimpleName());
 
@@ -46,8 +46,9 @@ public class Application {
 
         try {
             jfrToFlameGraphWriter.process();
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.err.println(e.getMessage());
+            throw e;
         }
     }
 }
