@@ -53,7 +53,7 @@ public class ApplicationTest extends TestCase {
 
     public void testJFRToFlameGraphWriterOutputFile() throws IOException {
         File tmp = File.createTempFile(getClass().getName(), "");
-        String[] args = {"-f", tmp.toString(), "-o", tmp.toString()};
+        String[] args = { "-f", tmp.toString(), "-o", tmp.toString() };
         parseCommands(args);
         assertTrue(tmp.exists());
         assertEquals(tmp, jfrToFlameGraphWriter.jfrdump);
@@ -62,15 +62,27 @@ public class ApplicationTest extends TestCase {
     }
 
     public void testIgnoreLineNumbersOption() throws IOException {
-        String[] args = {"-f", "temp", "-i"};
+        String[] args = { "-f", "temp", "-i" };
         parseCommands(args);
         assertTrue(jfrToFlameGraphWriter.ignoreLineNumbers);
     }
 
     public void testLiveOption() throws IOException {
-        String[] args = {"-f", "temp", "-l"};
+        String[] args = { "-f", "temp", "-l" };
         parseCommands(args);
         assertTrue(parameters.live);
+    }
+
+    public void testEventTypeOption() throws Exception {
+        String[] args = { "-f", "temp", "-ev", "allocation-tlab" };
+        parseCommands(args);
+        assertEquals(EventType.EVENT_ALLOCATION_IN_NEW_TLAB, jfrToFlameGraphWriter.eventType);
+    }
+
+    public void testEventTypeOptionDefaultValue() throws Exception {
+        String[] args = { "-f", "temp" };
+        parseCommands(args);
+        assertEquals(EventType.EVENT_METHOD_PROFILING_SAMPLE, jfrToFlameGraphWriter.eventType);
     }
 
 }

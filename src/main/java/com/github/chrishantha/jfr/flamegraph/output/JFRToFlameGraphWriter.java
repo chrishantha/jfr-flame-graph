@@ -15,17 +15,14 @@
  */
 package com.github.chrishantha.jfr.flamegraph.output;
 
-import com.beust.jcommander.Parameter;
-import com.jrockit.mc.common.IMCFrame;
-import com.jrockit.mc.common.IMCMethod;
-import com.jrockit.mc.flightrecorder.FlightRecording;
-import com.jrockit.mc.flightrecorder.FlightRecordingLoader;
-import com.jrockit.mc.flightrecorder.internal.model.FLRStackTrace;
-import com.jrockit.mc.flightrecorder.spi.IEvent;
-import com.jrockit.mc.flightrecorder.spi.ITimeRange;
-import com.jrockit.mc.flightrecorder.spi.IView;
-
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.Instant;
@@ -36,54 +33,71 @@ import java.util.Stack;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 
+import com.beust.jcommander.Parameter;
+import com.jrockit.mc.common.IMCFrame;
+import com.jrockit.mc.common.IMCMethod;
+import com.jrockit.mc.flightrecorder.FlightRecording;
+import com.jrockit.mc.flightrecorder.FlightRecordingLoader;
+import com.jrockit.mc.flightrecorder.internal.model.FLRStackTrace;
+import com.jrockit.mc.flightrecorder.spi.IEvent;
+import com.jrockit.mc.flightrecorder.spi.ITimeRange;
+import com.jrockit.mc.flightrecorder.spi.IView;
+
 /**
  * Parse JFR dump and create a compatible output for Flame Graph
  */
 public final class JFRToFlameGraphWriter {
 
-    @Parameter(names = {"-h", "--help"}, description = "Display Help", help = true)
+    @Parameter(names = { "-h", "--help" }, description = "Display Help", help = true)
     boolean help;
 
-    @Parameter(names = {"-f", "--jfrdump"}, description = "Java Flight Recorder Dump", required = true)
+    @Parameter(names = { "-f", "--jfrdump" }, description = "Java Flight Recorder Dump", required = true)
     File jfrdump;
 
-    @Parameter(names = {"-ot", "--output-type"}, description = "Output type")
+    @Parameter(names = { "-ot", "--output-type" }, description = "Output type")
     OutputType outputType = OutputType.FOLDED;
 
-    @Parameter(names = {"-o", "--output"}, description = "Output file")
+    @Parameter(names = { "-o", "--output" }, description = "Output file")
     File outputFile;
 
-    @Parameter(names = {"-d", "--decompress"}, description = "Decompress the JFR file")
+    @Parameter(names = { "-d", "--decompress" }, description = "Decompress the JFR file")
     boolean decompress;
 
-    @Parameter(names = {"-i", "--ignore-line-numbers"}, description = "Ignore Line Numbers in Stack Frame")
+    @Parameter(names = { "-i", "--ignore-line-numbers" }, description = "Ignore Line Numbers in Stack Frame")
     boolean ignoreLineNumbers;
 
-    @Parameter(names = {"-rv", "--show-return-value"}, description = "Show return value for methods in the stack")
+    @Parameter(names = { "-rv", "--show-return-value" }, description = "Show return value for methods in the stack")
     boolean showReturnValue;
 
-    @Parameter(names = {"-sn", "--use-simple-names"},
-            description = "Use simple names instead of qualified names in the stack")
+    @Parameter(names = { "-sn",
+            "--use-simple-names" }, description = "Use simple names instead of qualified names in the stack")
     boolean useSimpleNames;
 
-    @Parameter(names = {"-ha", "--hide-arguments"}, description = "Hide arguments in methods")
+    @Parameter(names = { "-ha", "--hide-arguments" }, description = "Hide arguments in methods")
     boolean hideArguments;
 
-    @Parameter(names = {"-j", "--print-jfr-details"}, description = "Print JFR details and exit")
+    @Parameter(names = { "-j", "--print-jfr-details" }, description = "Print JFR details and exit")
     boolean printJFRDetails;
 
-    @Parameter(names = {"-t", "--print-timestamp"}, description = "Print timestamp in JFR Details")
+    @Parameter(names = { "-t", "--print-timestamp" }, description = "Print timestamp in JFR Details")
     boolean printTimestamp;
 
-    @Parameter(names = {"-st", "--start-timestamp"}, description = "Start timestamp in seconds for filtering")
+    @Parameter(names = { "-st", "--start-timestamp" }, description = "Start timestamp in seconds for filtering")
     long startTimestamp;
 
-    @Parameter(names = {"-et", "--end-timestamp"}, description = "End timestamp in seconds for filtering")
+    @Parameter(names = { "-et", "--end-timestamp" }, description = "End timestamp in seconds for filtering")
     long endTimestamp;
 
-    private static final String EVENT_TYPE = "Method Profiling Sample";
+    @Parameter(names = { "-ev",
+            "--event-type" }, description = "Event type: cpu, allocation-tlab, allocation-outside-tlab, exceptions or locks. Defaults to cpu.", converter = EventType.EventTypeConverter.class)
+    EventType eventType = EventType.EVENT_METHOD_PROFILING_SAMPLE;
+
     private static final String EVENT_VALUE_STACK = "(stackTrace)";
+
+    private static final String EVENT_ALLOCATION_SIZE = "allocationSize";
+
     private static final String PRINT_FORMAT = "%-16s: %s%n";
+
     private static final String DURATION_FORMAT = "{0} h {1} min";
 
     public JFRToFlameGraphWriter(OutputWriterParameters parameters) {
@@ -120,11 +134,12 @@ public final class JFRToFlameGraphWriter {
         long processedEvents = 0;
 
         for (IEvent event : view) {
-            // Filter for Method Profiling Sample Events
-            if (EVENT_TYPE.equals(event.getEventType().getName())) {
+            // Filter for the specified event type, defaults to method profiling
+            // if not specified.
+            String name = event.getEventType().getName();
+            if (eventType.toString().equals(name)) {
                 long eventStartTimestamp = event.getStartTimestamp();
                 long eventEndTimestamp = event.getEndTimestamp();
-
                 if (filter && !filter(eventStartTimestamp, eventEndTimestamp)) {
                     continue;
                 }
@@ -132,9 +147,16 @@ public final class JFRToFlameGraphWriter {
                 // Get Stack Trace from the event. Field ID was identified from
                 // event.getEventType().getFieldIdentifiers()
                 FLRStackTrace flrStackTrace = (FLRStackTrace) event.getValue(EVENT_VALUE_STACK);
-                Stack<String> stack = getStack(flrStackTrace);
+                if (flrStackTrace != null) {
+                    Stack<String> stack = getStack(event);
+                    Long value = 1L;
+                    if (eventType.isAllocation()) {
+                        value = (Long) event.getValue(EVENT_ALLOCATION_SIZE);
+                    }
+                    flameGraphOutputWriter.processEvent(eventStartTimestamp, eventEndTimestamp, event.getDuration(),
+                            stack, value);
 
-                flameGraphOutputWriter.processEvent(eventStartTimestamp, eventEndTimestamp, event.getDuration(), stack);
+                }
                 processedEvents++;
             }
         }
@@ -145,7 +167,7 @@ public final class JFRToFlameGraphWriter {
         }
 
         try (Writer writer = outputFile != null ? new FileWriter(outputFile) : new PrintWriter(System.out);
-             BufferedWriter bufferedWriter = new BufferedWriter(writer);) {
+                BufferedWriter bufferedWriter = new BufferedWriter(writer);) {
             flameGraphOutputWriter.writeOutput(bufferedWriter);
         }
     }
@@ -175,7 +197,7 @@ public final class JFRToFlameGraphWriter {
         long maxEventEndTimestamp = 0;
 
         for (IEvent event : view) {
-            if (EVENT_TYPE.equals(event.getEventType().getName())) {
+            if (eventType.toString().equals(event.getEventType().getName())) {
                 long eventStartTimestamp = event.getStartTimestamp();
                 long eventEndTimestamp = event.getEndTimestamp();
                 if (eventStartTimestamp < minEventStartTimestamp) {
@@ -216,12 +238,17 @@ public final class JFRToFlameGraphWriter {
             System.out.format(PRINT_FORMAT, "Max End Event", formatter.format(maxEndInstant));
         }
         System.out.format(PRINT_FORMAT, "JFR Duration", MessageFormat.format(DURATION_FORMAT, hours, minutes));
-        System.out.format(PRINT_FORMAT, "Events Duration", MessageFormat.format(DURATION_FORMAT, eventHours,
-                eventMinutes));
+        System.out.format(PRINT_FORMAT, "Events Duration",
+                MessageFormat.format(DURATION_FORMAT, eventHours, eventMinutes));
     }
 
-    private Stack<String> getStack(FLRStackTrace flrStackTrace) {
+    private Stack<String> getStack(IEvent event) {
+        FLRStackTrace flrStackTrace = (FLRStackTrace) event.getValue(EVENT_VALUE_STACK);
         Stack<String> stack = new Stack<>();
+        if (flrStackTrace == null) {
+            stack.push("Ignored");
+            return stack;
+        }
         for (IMCFrame frame : flrStackTrace.getFrames()) {
             // Push method to a stack
             stack.push(getFrameName(frame));
@@ -246,10 +273,9 @@ public final class JFRToFlameGraphWriter {
 
         File decompressedFile;
 
-        try (GZIPInputStream compressedStream =
-                     new GZIPInputStream(new FileInputStream(compressedFile));
-             FileOutputStream uncompressedFileStream =
-                     new FileOutputStream(decompressedFile = File.createTempFile("jfr_", null))) {
+        try (GZIPInputStream compressedStream = new GZIPInputStream(new FileInputStream(compressedFile));
+                FileOutputStream uncompressedFileStream = new FileOutputStream(
+                        decompressedFile = File.createTempFile("jfr_", null))) {
 
             decompressedFile.deleteOnExit();
             int numberOfBytes;
@@ -261,6 +287,5 @@ public final class JFRToFlameGraphWriter {
 
         return decompressedFile;
     }
-
 
 }
