@@ -40,6 +40,8 @@ import com.jrockit.mc.flightrecorder.FlightRecording;
 import com.jrockit.mc.flightrecorder.FlightRecordingLoader;
 import com.jrockit.mc.flightrecorder.internal.model.FLRStackTrace;
 import com.jrockit.mc.flightrecorder.spi.IEvent;
+import com.jrockit.mc.flightrecorder.spi.IEventFilter;
+import com.jrockit.mc.flightrecorder.spi.IEventType;
 import com.jrockit.mc.flightrecorder.spi.ITimeRange;
 import com.jrockit.mc.flightrecorder.spi.IView;
 
@@ -88,8 +90,8 @@ public final class JFRToFlameGraphWriter {
     @Parameter(names = { "-et", "--end-timestamp" }, description = "End timestamp in seconds for filtering")
     long endTimestamp;
 
-    @Parameter(names = { "-ev",
-            "--event-type" }, description = "Event type: cpu, allocation-tlab, allocation-outside-tlab, exceptions or locks. Defaults to cpu.", converter = EventType.EventTypeConverter.class)
+    @Parameter(names = { "-e",
+            "--event" }, description = "Type of event used to generate the flamegraph", converter = EventType.EventTypeConverter.class)
     EventType eventType = EventType.EVENT_METHOD_PROFILING_SAMPLE;
 
     private static final String EVENT_VALUE_STACK = "(stackTrace)";
@@ -132,12 +134,21 @@ public final class JFRToFlameGraphWriter {
         FlameGraphOutputWriter flameGraphOutputWriter = outputType.getFlameGraphOutputWriter();
 
         long processedEvents = 0;
+        
+        view.setFilter(new IEventFilter() {
+            @Override
+            public boolean accept(IEvent event) {
+                return eventType.getName().equals(event.getEventType().getName());
+            }
+        });
+        
+        checkEventType(view);
 
         for (IEvent event : view) {
             // Filter for the specified event type, defaults to method profiling
             // if not specified.
             String name = event.getEventType().getName();
-            if (eventType.toString().equals(name)) {
+            if (eventType.getName().equals(name)) {
                 long eventStartTimestamp = event.getStartTimestamp();
                 long eventEndTimestamp = event.getEndTimestamp();
                 if (filter && !filter(eventStartTimestamp, eventEndTimestamp)) {
@@ -162,14 +173,31 @@ public final class JFRToFlameGraphWriter {
         }
 
         if (processedEvents == 0) {
-            System.err.println("There are no method profiling sample events");
-            System.exit(1);
+            noEventsExit();
         }
 
         try (Writer writer = outputFile != null ? new FileWriter(outputFile) : new PrintWriter(System.out);
                 BufferedWriter bufferedWriter = new BufferedWriter(writer);) {
             flameGraphOutputWriter.writeOutput(bufferedWriter);
         }
+    }
+
+    private void checkEventType(IView view) {
+        boolean found = false;
+        for (IEventType type : view.getEventTypes()) {
+            if(type.getName().equals(eventType.getName())) {
+                found = true;
+                break;
+            }
+        }
+        if(!found) {
+            noEventsExit();
+        }
+    }
+
+    private void noEventsExit() {
+        System.err.println("There are no events for type: [" + eventType + "]");
+        System.exit(1);
     }
 
     private boolean filter(long eventStartTimestamp, long eventEndTimestamp) {
@@ -197,7 +225,7 @@ public final class JFRToFlameGraphWriter {
         long maxEventEndTimestamp = 0;
 
         for (IEvent event : view) {
-            if (eventType.toString().equals(event.getEventType().getName())) {
+            if (eventType.getName().equals(event.getEventType().getName())) {
                 long eventStartTimestamp = event.getStartTimestamp();
                 long eventEndTimestamp = event.getEndTimestamp();
                 if (eventStartTimestamp < minEventStartTimestamp) {

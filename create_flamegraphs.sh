@@ -90,7 +90,7 @@ fi
 
 jfr_filename=$(basename $jfr_file)
 
-details=$(${JFG_DIR}/flamegraph-output.sh -ot folded -f $jfr_file -j -t)
+details=$(${JFG_DIR}/flamegraph-output.sh -ot folded $decompress -f $jfr_file -j -t)
 
 echo "$details"
 

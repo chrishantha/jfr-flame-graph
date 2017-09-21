@@ -7,30 +7,38 @@ import com.beust.jcommander.IStringConverter;
  */
 public enum EventType {
 
-    EVENT_METHOD_PROFILING_SAMPLE("Method Profiling Sample"), 
-    EVENT_ALLOCATION_IN_NEW_TLAB("Allocation in new TLAB", true), 
-    EVENT_ALLOCATION_OUTSIDE_TLAB("Allocation outside TLAB", true), 
-    EVENT_JAVA_EXCEPTION("Java Exception"), 
-    EVENT_JAVA_MONITOR_BLOCKED("Java Monitor Blocked");
+    EVENT_METHOD_PROFILING_SAMPLE("Method Profiling Sample", "cpu"),
+    EVENT_ALLOCATION_IN_NEW_TLAB("Allocation in new TLAB", "allocation-tlab", true), 
+    EVENT_ALLOCATION_OUTSIDE_TLAB("Allocation outside TLAB", "allocation-outside-tlab", true), 
+    EVENT_JAVA_EXCEPTION("Java Exception", "exceptions"),
+    EVENT_JAVA_MONITOR_BLOCKED("Java Monitor Blocked", "monitor-blocked");
 
     /** Name as declared in the JFR recording */
     private final String name;
 
+    /** Id used as a command line option */
+    private final String id;
+
     /** True if the event is allocation-related */
     private final boolean isAllocation;
 
-    EventType(String name, boolean isAllocation) {
+    EventType(String name, String id, boolean isAllocation) {
         this.name = name;
+        this.id = id;
         this.isAllocation = isAllocation;
     }
 
-    EventType(String name) {
-        this(name, false);
+    EventType(String name, String id) {
+        this(name, id, false);
+    }
+
+    public String getName() {
+        return name;
     }
 
     @Override
     public String toString() {
-        return name;
+        return id;
     }
 
     /**
@@ -48,10 +56,12 @@ public enum EventType {
             return EVENT_ALLOCATION_OUTSIDE_TLAB;
         case "exceptions":
             return EVENT_JAVA_EXCEPTION;
-        case "locks":
+        case "monitor-blocked":
             return EVENT_JAVA_MONITOR_BLOCKED;
-        default:
+        case "cpu":
             return EVENT_METHOD_PROFILING_SAMPLE;
+        default:
+            throw new IllegalArgumentException("Event type [" + name + "] does not exist.");
         }
     }
 

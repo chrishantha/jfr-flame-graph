@@ -74,7 +74,7 @@ public class ApplicationTest extends TestCase {
     }
 
     public void testEventTypeOption() throws Exception {
-        String[] args = { "-f", "temp", "-ev", "allocation-tlab" };
+        String[] args = { "-f", "temp", "-e", "allocation-tlab" };
         parseCommands(args);
         assertEquals(EventType.EVENT_ALLOCATION_IN_NEW_TLAB, jfrToFlameGraphWriter.eventType);
     }
