@@ -29,14 +29,14 @@ public class FoldedOutputWriter implements FlameGraphOutputWriter {
     /**
      * The data model for folded stacks
      */
-    private final Map<String, Integer> stackTraceMap = new LinkedHashMap<>();
+    private final Map<String, Long> stackTraceMap = new LinkedHashMap<>();
 
     @Override
     public void initialize(OutputWriterParameters parameters) {
     }
 
     @Override
-    public void processEvent(long startTimestamp, long endTimestamp, long duration, Stack<String> stack) {
+    public void processEvent(long startTimestamp, long endTimestamp, long duration, Stack<String> stack, Long value) {
         // StringBuilder to keep stack trace
         StringBuilder stackTraceBuilder = new StringBuilder();
         boolean appendSemicolon = false;
@@ -49,18 +49,18 @@ public class FoldedOutputWriter implements FlameGraphOutputWriter {
             stackTraceBuilder.append(stack.pop());
         }
         String stackTrace = stackTraceBuilder.toString();
-        Integer count = stackTraceMap.get(stackTrace);
+        Long count = stackTraceMap.get(stackTrace);
         if (count == null) {
-            count = 1;
+            count = value;
         } else {
-            count++;
+            count += value;
         }
         stackTraceMap.put(stackTrace, count);
     }
 
     @Override
     public void writeOutput(BufferedWriter bufferedWriter) throws IOException {
-        for (Map.Entry<String, Integer> entry : stackTraceMap.entrySet()) {
+        for (Map.Entry<String, Long> entry : stackTraceMap.entrySet()) {
             bufferedWriter.write(String.format("%s %d%n", entry.getKey(), entry.getValue()));
         }
     }

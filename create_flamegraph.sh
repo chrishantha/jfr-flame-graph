@@ -36,7 +36,7 @@ function help {
 
 jfr_file=""
 
-while getopts "df:airsx:y:" opts
+while getopts "df:airsx:y:e:" opts
 do
   case $opts in
     f)
