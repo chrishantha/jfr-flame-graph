@@ -50,6 +50,7 @@ import com.jrockit.mc.flightrecorder.spi.IView;
  */
 public final class JFRToFlameGraphWriter {
 
+    private final OutputWriterParameters parameters;
     @Parameter(names = { "-h", "--help" }, description = "Display Help", help = true)
     boolean help;
 
@@ -103,7 +104,7 @@ public final class JFRToFlameGraphWriter {
     private static final String DURATION_FORMAT = "{0} h {1} min";
 
     public JFRToFlameGraphWriter(OutputWriterParameters parameters) {
-        outputType.getFlameGraphOutputWriter().initialize(parameters);
+        this.parameters = parameters;
     }
 
     public void process() throws Exception {
@@ -130,7 +131,8 @@ public final class JFRToFlameGraphWriter {
         startTimestamp = TimeUnit.SECONDS.toNanos(startTimestamp);
         endTimestamp = TimeUnit.SECONDS.toNanos(endTimestamp);
 
-        FlameGraphOutputWriter flameGraphOutputWriter = outputType.getFlameGraphOutputWriter();
+        FlameGraphOutputWriter flameGraphOutputWriter = outputType.createFlameGraphOutputWriter();
+        flameGraphOutputWriter.initialize(parameters);
 
         long processedEvents = 0;
         
