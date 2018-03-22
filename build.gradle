@@ -15,12 +15,18 @@ dependencies {
   implementation findMcJars()
   implementation "com.beust:jcommander:1.71"
   implementation "com.google.code.gson:gson:2.8.0"
-  implementation "junit:junit:4.12"
+  testImplementation "junit:junit:4.12"
 }
 
 group = "com.github.oehme.jfr"
 version = "0.0.3"
 mainClassName = 'com.github.chrishantha.jfr.flamegraph.output.Application'
+
+shadowJar {
+  relocate 'com.beust', 'shadow.com.beust'
+  relocate 'com.google', 'shadow.google'
+  relocate 'com.jrockit', 'shadow.jrockit'
+}
 
 publishing {
   publications {
