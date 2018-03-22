@@ -1,0 +1,31 @@
+plugins {
+  id 'application'
+  id 'maven-publish'
+  id "com.github.johnrengelman.shadow" version "2.0.2"
+}
+
+
+apply from: "gradle/missioncontrol.gradle"
+
+repositories {
+  jcenter()
+}
+
+dependencies {
+  implementation findMcJars()
+  implementation "com.beust:jcommander:1.71"
+  implementation "com.google.code.gson:gson:2.8.0"
+  implementation "junit:junit:4.12"
+}
+
+group = "com.github.oehme.jfr"
+version = "0.0.3"
+mainClassName = 'com.github.chrishantha.jfr.flamegraph.output.Application'
+
+publishing {
+  publications {
+    shadow(MavenPublication) { publication ->
+      project.shadow.component(publication)
+    }
+  }
+}
