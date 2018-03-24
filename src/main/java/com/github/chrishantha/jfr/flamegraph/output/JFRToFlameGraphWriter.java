@@ -134,7 +134,6 @@ public final class JFRToFlameGraphWriter {
         FlameGraphOutputWriter flameGraphOutputWriter = outputType.createFlameGraphOutputWriter();
         flameGraphOutputWriter.initialize(parameters);
 
-        long processedEvents = 0;
         
         view.setFilter(new IEventFilter() {
             @Override
@@ -142,8 +141,6 @@ public final class JFRToFlameGraphWriter {
                 return eventType.getName().equals(event.getEventType().getName());
             }
         });
-        
-        checkEventType(view);
 
         for (IEvent event : view) {
             // Filter for the specified event type, defaults to method profiling
@@ -169,36 +166,13 @@ public final class JFRToFlameGraphWriter {
                             stack, value);
 
                 }
-                processedEvents++;
             }
-        }
-
-        if (processedEvents == 0) {
-            noEventsExit();
         }
 
         try (Writer writer = outputFile != null ? new FileWriter(outputFile) : new PrintWriter(System.out);
                 BufferedWriter bufferedWriter = new BufferedWriter(writer);) {
             flameGraphOutputWriter.writeOutput(bufferedWriter);
         }
-    }
-
-    private void checkEventType(IView view) {
-        boolean found = false;
-        for (IEventType type : view.getEventTypes()) {
-            if(type.getName().equals(eventType.getName())) {
-                found = true;
-                break;
-            }
-        }
-        if(!found) {
-            noEventsExit();
-        }
-    }
-
-    private void noEventsExit() {
-        System.err.println("There are no events for type: [" + eventType + "]");
-        System.exit(1);
     }
 
     private boolean filter(long eventStartTimestamp, long eventEndTimestamp) {
