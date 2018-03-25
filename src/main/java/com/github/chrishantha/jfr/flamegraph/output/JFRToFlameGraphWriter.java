@@ -15,14 +15,18 @@
  */
 package com.github.chrishantha.jfr.flamegraph.output;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Writer;
+import com.beust.jcommander.Parameter;
+import com.jrockit.mc.common.IMCFrame;
+import com.jrockit.mc.common.IMCMethod;
+import com.jrockit.mc.flightrecorder.FlightRecording;
+import com.jrockit.mc.flightrecorder.FlightRecordingLoader;
+import com.jrockit.mc.flightrecorder.internal.model.FLRStackTrace;
+import com.jrockit.mc.flightrecorder.spi.IEvent;
+import com.jrockit.mc.flightrecorder.spi.IEventFilter;
+import com.jrockit.mc.flightrecorder.spi.ITimeRange;
+import com.jrockit.mc.flightrecorder.spi.IView;
+
+import java.io.*;
 import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.Instant;
@@ -32,18 +36,6 @@ import java.time.format.FormatStyle;
 import java.util.Stack;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
-
-import com.beust.jcommander.Parameter;
-import com.jrockit.mc.common.IMCFrame;
-import com.jrockit.mc.common.IMCMethod;
-import com.jrockit.mc.flightrecorder.FlightRecording;
-import com.jrockit.mc.flightrecorder.FlightRecordingLoader;
-import com.jrockit.mc.flightrecorder.internal.model.FLRStackTrace;
-import com.jrockit.mc.flightrecorder.spi.IEvent;
-import com.jrockit.mc.flightrecorder.spi.IEventFilter;
-import com.jrockit.mc.flightrecorder.spi.IEventType;
-import com.jrockit.mc.flightrecorder.spi.ITimeRange;
-import com.jrockit.mc.flightrecorder.spi.IView;
 
 /**
  * Parse JFR dump and create a compatible output for Flame Graph
@@ -97,7 +89,7 @@ public final class JFRToFlameGraphWriter {
 
     private static final String EVENT_VALUE_STACK = "(stackTrace)";
 
-    private static final String EVENT_ALLOCATION_SIZE = "allocationSize";
+    private static final String EVENT_TLAB_SIZE = "tlabSize";
 
     private static final String PRINT_FORMAT = "%-16s: %s%n";
 
@@ -134,7 +126,6 @@ public final class JFRToFlameGraphWriter {
         FlameGraphOutputWriter flameGraphOutputWriter = outputType.createFlameGraphOutputWriter();
         flameGraphOutputWriter.initialize(parameters);
 
-        
         view.setFilter(new IEventFilter() {
             @Override
             public boolean accept(IEvent event) {
@@ -160,7 +151,7 @@ public final class JFRToFlameGraphWriter {
                     Stack<String> stack = getStack(event);
                     Long value = 1L;
                     if (eventType.isAllocation()) {
-                        value = (Long) event.getValue(EVENT_ALLOCATION_SIZE);
+                        value = (Long) event.getValue(EVENT_TLAB_SIZE);
                     }
                     flameGraphOutputWriter.processEvent(eventStartTimestamp, eventEndTimestamp, event.getDuration(),
                             stack, value);
