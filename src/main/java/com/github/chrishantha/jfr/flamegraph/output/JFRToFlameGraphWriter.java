@@ -240,12 +240,13 @@ public final class JFRToFlameGraphWriter {
         FLRStackTrace flrStackTrace = (FLRStackTrace) event.getValue(EVENT_VALUE_STACK);
         Stack<String> stack = new Stack<>();
         if (flrStackTrace == null) {
-            stack.push("Ignored");
             return stack;
         }
         for (IMCFrame frame : flrStackTrace.getFrames()) {
-            // Push method to a stack
-            stack.push(getFrameName(frame));
+            String frameName = getFrameName(frame);
+            if (frameName != null) {
+                stack.push(frameName);
+            }
         }
         return stack;
     }
@@ -253,6 +254,10 @@ public final class JFRToFlameGraphWriter {
     private String getFrameName(IMCFrame frame) {
         StringBuilder methodBuilder = new StringBuilder();
         IMCMethod method = frame.getMethod();
+        if (method == null) {
+            return null;
+        }
+
         methodBuilder.append(method.getHumanReadable(showReturnValue, !useSimpleNames, true, !useSimpleNames,
                 !hideArguments, !useSimpleNames));
         if (!ignoreLineNumbers) {
