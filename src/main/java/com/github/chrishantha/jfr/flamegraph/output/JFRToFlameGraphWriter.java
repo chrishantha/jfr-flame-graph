@@ -84,7 +84,7 @@ public final class JFRToFlameGraphWriter {
 
     @Parameter(names = {"-e",
             "--event"}, description = "Type of event used to generate the flamegraph", converter = EventType.EventTypeConverter.class)
-    EventType eventType = EventType.EVENT_METHOD_PROFILING_SAMPLE;
+    EventType eventType = EventType.METHOD_PROFILING_SAMPLE;
 
     private static final String EVENT_VALUE_STACK = "(stackTrace)";
 

@@ -3,9 +3,11 @@ package com.github.chrishantha.jfr.flamegraph.output;
 import com.beust.jcommander.IStringConverter;
 import com.jrockit.mc.flightrecorder.spi.IEvent;
 
+import java.util.Arrays;
+
 /**
  * Different types of events possibly available in a JFR recording.
- *
+ * <p>
  * Each type can be activated using a command line option and can match one or many
  * JFR event types. Each type knows how to convert the event into a numeric value
  * that will make the flame graph most meaningful. For allocation events this would
@@ -14,28 +16,26 @@ import com.jrockit.mc.flightrecorder.spi.IEvent;
  */
 public enum EventType {
 
-    EVENT_METHOD_PROFILING_SAMPLE("Method Profiling Sample", "cpu"),
-    EVENT_ALLOCATION_IN_NEW_TLAB("Allocation in new TLAB", "allocation-tlab", "tlabSize"),
-    EVENT_ALLOCATION_OUTSIDE_TLAB("Allocation outside TLAB", "allocation-outside-tlab", "allocationSize"),
-    EVENT_JAVA_EXCEPTION("Java Exception", "exceptions"),
-    EVENT_JAVA_MONITOR_BLOCKED("Java Monitor Blocked", "monitor-blocked", "(duration)");
+    METHOD_PROFILING_SAMPLE("cpu", null, "Method Profiling Sample"),
+    ALLOCATION_IN_NEW_TLAB("allocation-tlab", "tlabSize", "Allocation in new TLAB"),
+    ALLOCATION_OUTSIDE_TLAB("allocation-outside-tlab", "allocationSize", "Allocation outside TLAB"),
+    JAVA_EXCEPTION("exceptions", null, "Java Exception"),
+    JAVA_MONITOR_BLOCKED("monitor-blocked", "(duration)", "Java Monitor Blocked"),
+    IO("io", "(duration)", "File Read", "File Write", "Socket Read", "Socket Write");
 
-    private final String name;
     private final String commandLineOption;
     private final String valueField;
+    private final String[] eventNames;
 
-    EventType(String name, String commandLineOption) {
-        this(name, commandLineOption, null);
-    }
-
-    EventType(String name, String commandLineOption, String valueField) {
-        this.name = name;
+    EventType(String commandLineOption, String valueField, String... eventNames) {
+        this.eventNames = eventNames;
         this.commandLineOption = commandLineOption;
         this.valueField = valueField;
     }
 
     public boolean matches(IEvent event) {
-        return name.equals(event.getEventType().getName());
+        String name = event.getEventType().getName();
+        return Arrays.stream(eventNames).anyMatch(name::equals);
     }
 
     public long getValue(IEvent event) {
@@ -56,15 +56,17 @@ public enum EventType {
         public EventType convert(String commandLineOption) {
             switch (commandLineOption) {
                 case "allocation-tlab":
-                    return EVENT_ALLOCATION_IN_NEW_TLAB;
+                    return ALLOCATION_IN_NEW_TLAB;
                 case "allocation-outside-tlab":
-                    return EVENT_ALLOCATION_OUTSIDE_TLAB;
+                    return ALLOCATION_OUTSIDE_TLAB;
                 case "exceptions":
-                    return EVENT_JAVA_EXCEPTION;
+                    return JAVA_EXCEPTION;
                 case "monitor-blocked":
-                    return EVENT_JAVA_MONITOR_BLOCKED;
+                    return JAVA_MONITOR_BLOCKED;
                 case "cpu":
-                    return EVENT_METHOD_PROFILING_SAMPLE;
+                    return METHOD_PROFILING_SAMPLE;
+                case "io":
+                    return IO;
                 default:
                     throw new IllegalArgumentException("Event type [" + commandLineOption + "] does not exist.");
             }
