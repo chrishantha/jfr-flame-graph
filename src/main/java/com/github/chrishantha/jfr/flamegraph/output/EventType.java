@@ -4,6 +4,7 @@ import com.beust.jcommander.IStringConverter;
 import com.jrockit.mc.flightrecorder.spi.IEvent;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Different types of events possibly available in a JFR recording.
@@ -16,18 +17,18 @@ import java.util.Arrays;
  */
 public enum EventType {
 
-    METHOD_PROFILING_SAMPLE("cpu", null, "Method Profiling Sample"),
-    ALLOCATION_IN_NEW_TLAB("allocation-tlab", "tlabSize", "Allocation in new TLAB"),
-    ALLOCATION_OUTSIDE_TLAB("allocation-outside-tlab", "allocationSize", "Allocation outside TLAB"),
-    JAVA_EXCEPTION("exceptions", null, "Java Exception"),
-    JAVA_MONITOR_BLOCKED("monitor-blocked", "(duration)", "Java Monitor Blocked"),
-    IO("io", "(duration)", "File Read", "File Write", "Socket Read", "Socket Write");
+    METHOD_PROFILING_SAMPLE("cpu", ValueField.COUNT, "Method Profiling Sample"),
+    ALLOCATION_IN_NEW_TLAB("allocation-tlab", ValueField.TLAB_SIZE, "Allocation in new TLAB"),
+    ALLOCATION_OUTSIDE_TLAB("allocation-outside-tlab", ValueField.ALLOCATION_SIZE, "Allocation outside TLAB"),
+    JAVA_EXCEPTION("exceptions", ValueField.COUNT, "Java Exception"),
+    JAVA_MONITOR_BLOCKED("monitor-blocked", ValueField.DURATION, "Java Monitor Blocked"),
+    IO("io", ValueField.DURATION, "File Read", "File Write", "Socket Read", "Socket Write");
 
     private final String commandLineOption;
-    private final String valueField;
+    private final ValueField valueField;
     private final String[] eventNames;
 
-    EventType(String commandLineOption, String valueField, String... eventNames) {
+    EventType(String commandLineOption, ValueField valueField, String... eventNames) {
         this.eventNames = eventNames;
         this.commandLineOption = commandLineOption;
         this.valueField = valueField;
@@ -39,10 +40,7 @@ public enum EventType {
     }
 
     public long getValue(IEvent event) {
-        if (valueField == null) {
-            return 1;
-        }
-        return (long) event.getValue(valueField);
+        return valueField.getValue(event);
     }
 
     @Override
@@ -71,5 +69,35 @@ public enum EventType {
                     throw new IllegalArgumentException("Event type [" + commandLineOption + "] does not exist.");
             }
         }
+    }
+
+    private enum ValueField {
+        COUNT {
+            @Override
+            public long getValue(IEvent event) {
+                return 1;
+            }
+        },
+        DURATION {
+            @Override
+            public long getValue(IEvent event) {
+                long nanos = (long) event.getValue("(duration)");
+                return TimeUnit.NANOSECONDS.toMillis(nanos);
+            }
+        },
+        ALLOCATION_SIZE {
+            @Override
+            public long getValue(IEvent event) {
+                return (long) event.getValue("allocationSize");
+            }
+        },
+        TLAB_SIZE {
+            @Override
+            public long getValue(IEvent event) {
+                return (long) event.getValue("tlabSize");
+            }
+        };
+
+        public abstract long getValue(IEvent event);
     }
 }
