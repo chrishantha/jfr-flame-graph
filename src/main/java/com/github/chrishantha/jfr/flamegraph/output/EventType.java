@@ -1,74 +1,73 @@
 package com.github.chrishantha.jfr.flamegraph.output;
 
 import com.beust.jcommander.IStringConverter;
+import com.jrockit.mc.flightrecorder.spi.IEvent;
 
 /**
  * Different types of events possibly available in a JFR recording.
+ *
+ * Each type can be activated using a command line option and can match one or many
+ * JFR event types. Each type knows how to convert the event into a numeric value
+ * that will make the flame graph most meaningful. For allocation events this would
+ * be the number of bytes allocated, while for file reads it would be the duration of
+ * the read operation.
  */
 public enum EventType {
 
     EVENT_METHOD_PROFILING_SAMPLE("Method Profiling Sample", "cpu"),
-    EVENT_ALLOCATION_IN_NEW_TLAB("Allocation in new TLAB", "allocation-tlab", true), 
-    EVENT_ALLOCATION_OUTSIDE_TLAB("Allocation outside TLAB", "allocation-outside-tlab", true), 
+    EVENT_ALLOCATION_IN_NEW_TLAB("Allocation in new TLAB", "allocation-tlab", "tlabSize"),
+    EVENT_ALLOCATION_OUTSIDE_TLAB("Allocation outside TLAB", "allocation-outside-tlab", "allocationSize"),
     EVENT_JAVA_EXCEPTION("Java Exception", "exceptions"),
     EVENT_JAVA_MONITOR_BLOCKED("Java Monitor Blocked", "monitor-blocked");
 
-    /** Name as declared in the JFR recording */
     private final String name;
+    private final String commandLineOption;
+    private final String valueField;
 
-    /** Id used as a command line option */
-    private final String id;
+    EventType(String name, String commandLineOption) {
+        this(name, commandLineOption, null);
+    }
 
-    /** True if the event is allocation-related */
-    private final boolean isAllocation;
-
-    EventType(String name, String id, boolean isAllocation) {
+    EventType(String name, String commandLineOption, String valueField) {
         this.name = name;
-        this.id = id;
-        this.isAllocation = isAllocation;
+        this.commandLineOption = commandLineOption;
+        this.valueField = valueField;
     }
 
-    EventType(String name, String id) {
-        this(name, id, false);
+    public boolean matches(IEvent event) {
+        return name.equals(event.getEventType().getName());
     }
 
-    public String getName() {
-        return name;
+    public long getValue(IEvent event) {
+        if (valueField == null) {
+            return 1;
+        }
+        return (long) event.getValue(valueField);
     }
 
     @Override
     public String toString() {
-        return id;
+        return commandLineOption;
     }
 
-    /**
-     * @return true if the event is allocated related
-     */
-    public boolean isAllocation() {
-        return isAllocation;
-    }
-
-    public static EventType from(String name) {
-        switch (name) {
-        case "allocation-tlab":
-            return EVENT_ALLOCATION_IN_NEW_TLAB;
-        case "allocation-outside-tlab":
-            return EVENT_ALLOCATION_OUTSIDE_TLAB;
-        case "exceptions":
-            return EVENT_JAVA_EXCEPTION;
-        case "monitor-blocked":
-            return EVENT_JAVA_MONITOR_BLOCKED;
-        case "cpu":
-            return EVENT_METHOD_PROFILING_SAMPLE;
-        default:
-            throw new IllegalArgumentException("Event type [" + name + "] does not exist.");
-        }
-    }
 
     public static final class EventTypeConverter implements IStringConverter<EventType> {
         @Override
-        public EventType convert(String value) {
-            return EventType.from(value);
+        public EventType convert(String commandLineOption) {
+            switch (commandLineOption) {
+                case "allocation-tlab":
+                    return EVENT_ALLOCATION_IN_NEW_TLAB;
+                case "allocation-outside-tlab":
+                    return EVENT_ALLOCATION_OUTSIDE_TLAB;
+                case "exceptions":
+                    return EVENT_JAVA_EXCEPTION;
+                case "monitor-blocked":
+                    return EVENT_JAVA_MONITOR_BLOCKED;
+                case "cpu":
+                    return EVENT_METHOD_PROFILING_SAMPLE;
+                default:
+                    throw new IllegalArgumentException("Event type [" + commandLineOption + "] does not exist.");
+            }
         }
     }
 }

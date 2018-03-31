@@ -26,7 +26,7 @@ public interface FlameGraphOutputWriter {
 
     void initialize(OutputWriterParameters parameters);
 
-    void processEvent(long startTimestamp, long endTimestamp, long duration, Stack<String> stack, Long value);
+    void processEvent(long startTimestamp, long endTimestamp, long duration, Stack<String> stack, long value);
 
     void writeOutput(BufferedWriter bufferedWriter) throws IOException;
 }

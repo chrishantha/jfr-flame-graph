@@ -1,12 +1,12 @@
 /*
  * Copyright 2015 M. Isuru Tharanga Chrishantha Perera
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,6 @@ import com.jrockit.mc.flightrecorder.FlightRecording;
 import com.jrockit.mc.flightrecorder.FlightRecordingLoader;
 import com.jrockit.mc.flightrecorder.internal.model.FLRStackTrace;
 import com.jrockit.mc.flightrecorder.spi.IEvent;
-import com.jrockit.mc.flightrecorder.spi.IEventFilter;
 import com.jrockit.mc.flightrecorder.spi.ITimeRange;
 import com.jrockit.mc.flightrecorder.spi.IView;
 
@@ -43,53 +42,51 @@ import java.util.zip.GZIPInputStream;
 public final class JFRToFlameGraphWriter {
 
     private final OutputWriterParameters parameters;
-    @Parameter(names = { "-h", "--help" }, description = "Display Help", help = true)
+    @Parameter(names = {"-h", "--help"}, description = "Display Help", help = true)
     boolean help;
 
-    @Parameter(names = { "-f", "--jfrdump" }, description = "Java Flight Recorder Dump", required = true)
+    @Parameter(names = {"-f", "--jfrdump"}, description = "Java Flight Recorder Dump", required = true)
     File jfrdump;
 
-    @Parameter(names = { "-ot", "--output-type" }, description = "Output type")
+    @Parameter(names = {"-ot", "--output-type"}, description = "Output type")
     OutputType outputType = OutputType.FOLDED;
 
-    @Parameter(names = { "-o", "--output" }, description = "Output file")
+    @Parameter(names = {"-o", "--output"}, description = "Output file")
     File outputFile;
 
-    @Parameter(names = { "-d", "--decompress" }, description = "Decompress the JFR file")
+    @Parameter(names = {"-d", "--decompress"}, description = "Decompress the JFR file")
     boolean decompress;
 
-    @Parameter(names = { "-i", "--ignore-line-numbers" }, description = "Ignore Line Numbers in Stack Frame")
+    @Parameter(names = {"-i", "--ignore-line-numbers"}, description = "Ignore Line Numbers in Stack Frame")
     boolean ignoreLineNumbers;
 
-    @Parameter(names = { "-rv", "--show-return-value" }, description = "Show return value for methods in the stack")
+    @Parameter(names = {"-rv", "--show-return-value"}, description = "Show return value for methods in the stack")
     boolean showReturnValue;
 
-    @Parameter(names = { "-sn",
-            "--use-simple-names" }, description = "Use simple names instead of qualified names in the stack")
+    @Parameter(names = {"-sn",
+            "--use-simple-names"}, description = "Use simple names instead of qualified names in the stack")
     boolean useSimpleNames;
 
-    @Parameter(names = { "-ha", "--hide-arguments" }, description = "Hide arguments in methods")
+    @Parameter(names = {"-ha", "--hide-arguments"}, description = "Hide arguments in methods")
     boolean hideArguments;
 
-    @Parameter(names = { "-j", "--print-jfr-details" }, description = "Print JFR details and exit")
+    @Parameter(names = {"-j", "--print-jfr-details"}, description = "Print JFR details and exit")
     boolean printJFRDetails;
 
-    @Parameter(names = { "-t", "--print-timestamp" }, description = "Print timestamp in JFR Details")
+    @Parameter(names = {"-t", "--print-timestamp"}, description = "Print timestamp in JFR Details")
     boolean printTimestamp;
 
-    @Parameter(names = { "-st", "--start-timestamp" }, description = "Start timestamp in seconds for filtering")
-    long startTimestamp;
+    @Parameter(names = {"-st", "--start-timestamp"}, description = "Start timestamp in seconds for filtering", converter = SecondsToNanosConverter.class)
+    long startTimestamp = Long.MIN_VALUE;
 
-    @Parameter(names = { "-et", "--end-timestamp" }, description = "End timestamp in seconds for filtering")
-    long endTimestamp;
+    @Parameter(names = {"-et", "--end-timestamp"}, description = "End timestamp in seconds for filtering", converter = SecondsToNanosConverter.class)
+    long endTimestamp = Long.MAX_VALUE;
 
-    @Parameter(names = { "-e",
-            "--event" }, description = "Type of event used to generate the flamegraph", converter = EventType.EventTypeConverter.class)
+    @Parameter(names = {"-e",
+            "--event"}, description = "Type of event used to generate the flamegraph", converter = EventType.EventTypeConverter.class)
     EventType eventType = EventType.EVENT_METHOD_PROFILING_SAMPLE;
 
     private static final String EVENT_VALUE_STACK = "(stackTrace)";
-
-    private static final String EVENT_TLAB_SIZE = "tlabSize";
 
     private static final String PRINT_FORMAT = "%-16s: %s%n";
 
@@ -100,6 +97,16 @@ public final class JFRToFlameGraphWriter {
     }
 
     public void process() throws Exception {
+        FlightRecording recording = loadRecording();
+
+        if (printJFRDetails) {
+            printJFRDetails(recording);
+        } else {
+            convertToStacks(recording);
+        }
+    }
+
+    private FlightRecording loadRecording() throws IOException {
         FlightRecording recording;
         try {
             recording = FlightRecordingLoader.loadFile(decompress ? decompressFile(jfrdump) : jfrdump);
@@ -110,63 +117,39 @@ public final class JFRToFlameGraphWriter {
             }
             throw e;
         }
+        return recording;
+    }
 
+    private void convertToStacks(FlightRecording recording) throws IOException {
         IView view = recording.createView();
-
-        if (printJFRDetails) {
-            printJFRDetails(recording);
-            return;
-        }
-
-        // Filter if start or end timestamp is passed as options
-        final boolean filter = startTimestamp > 0 || endTimestamp > 0;
-        startTimestamp = TimeUnit.SECONDS.toNanos(startTimestamp);
-        endTimestamp = TimeUnit.SECONDS.toNanos(endTimestamp);
 
         FlameGraphOutputWriter flameGraphOutputWriter = outputType.createFlameGraphOutputWriter();
         flameGraphOutputWriter.initialize(parameters);
 
-        view.setFilter(new IEventFilter() {
-            @Override
-            public boolean accept(IEvent event) {
-                return eventType.getName().equals(event.getEventType().getName());
-            }
-        });
+        view.setFilter(eventType::matches);
 
         for (IEvent event : view) {
-            // Filter for the specified event type, defaults to method profiling
-            // if not specified.
-            String name = event.getEventType().getName();
-            if (eventType.getName().equals(name)) {
-                long eventStartTimestamp = event.getStartTimestamp();
-                long eventEndTimestamp = event.getEndTimestamp();
-                if (filter && !filter(eventStartTimestamp, eventEndTimestamp)) {
-                    continue;
-                }
+            if (!matchesTimeRange(event)) {
+                continue;
+            }
 
-                // Get Stack Trace from the event. Field ID was identified from
-                // event.getEventType().getFieldIdentifiers()
-                FLRStackTrace flrStackTrace = (FLRStackTrace) event.getValue(EVENT_VALUE_STACK);
-                if (flrStackTrace != null) {
-                    Stack<String> stack = getStack(event);
-                    Long value = 1L;
-                    if (eventType.isAllocation()) {
-                        value = (Long) event.getValue(EVENT_TLAB_SIZE);
-                    }
-                    flameGraphOutputWriter.processEvent(eventStartTimestamp, eventEndTimestamp, event.getDuration(),
-                            stack, value);
-
-                }
+            FLRStackTrace flrStackTrace = (FLRStackTrace) event.getValue(EVENT_VALUE_STACK);
+            if (flrStackTrace != null) {
+                Stack<String> stack = getStack(event);
+                long value = eventType.getValue(event);
+                flameGraphOutputWriter.processEvent(event.getStartTimestamp(), event.getEndTimestamp(), event.getDuration(), stack, value);
             }
         }
 
         try (Writer writer = outputFile != null ? new FileWriter(outputFile) : new PrintWriter(System.out);
-                BufferedWriter bufferedWriter = new BufferedWriter(writer);) {
+             BufferedWriter bufferedWriter = new BufferedWriter(writer)) {
             flameGraphOutputWriter.writeOutput(bufferedWriter);
         }
     }
 
-    private boolean filter(long eventStartTimestamp, long eventEndTimestamp) {
+    private boolean matchesTimeRange(IEvent event) {
+        long eventStartTimestamp = event.getStartTimestamp();
+        long eventEndTimestamp = event.getEndTimestamp();
         if (eventStartTimestamp >= startTimestamp && eventStartTimestamp <= endTimestamp) {
             return true;
         } else if (eventEndTimestamp >= startTimestamp && eventEndTimestamp <= endTimestamp) {
@@ -190,19 +173,17 @@ public final class JFRToFlameGraphWriter {
         long minEventStartTimestamp = Long.MAX_VALUE;
         long maxEventEndTimestamp = 0;
 
-        for (IEvent event : view) {
-            if (eventType.getName().equals(event.getEventType().getName())) {
-                long eventStartTimestamp = event.getStartTimestamp();
-                long eventEndTimestamp = event.getEndTimestamp();
-                if (eventStartTimestamp < minEventStartTimestamp) {
-                    // Setting min event start
-                    minEventStartTimestamp = eventStartTimestamp;
-                }
+        view.setFilter(eventType::matches);
 
-                if (eventEndTimestamp > maxEventEndTimestamp) {
-                    // Setting max event end
-                    maxEventEndTimestamp = eventEndTimestamp;
-                }
+        for (IEvent event : view) {
+            long eventStartTimestamp = event.getStartTimestamp();
+            long eventEndTimestamp = event.getEndTimestamp();
+            if (eventStartTimestamp < minEventStartTimestamp) {
+                minEventStartTimestamp = eventStartTimestamp;
+            }
+
+            if (eventEndTimestamp > maxEventEndTimestamp) {
+                maxEventEndTimestamp = eventEndTimestamp;
             }
         }
 
@@ -258,8 +239,7 @@ public final class JFRToFlameGraphWriter {
             return null;
         }
 
-        methodBuilder.append(method.getHumanReadable(showReturnValue, !useSimpleNames, true, !useSimpleNames,
-                !hideArguments, !useSimpleNames));
+        methodBuilder.append(method.getHumanReadable(showReturnValue, !useSimpleNames, true, !useSimpleNames, !hideArguments, !useSimpleNames));
         if (!ignoreLineNumbers) {
             methodBuilder.append(":");
             methodBuilder.append(frame.getFrameLineNumber());
@@ -273,8 +253,8 @@ public final class JFRToFlameGraphWriter {
         File decompressedFile;
 
         try (GZIPInputStream compressedStream = new GZIPInputStream(new FileInputStream(compressedFile));
-                FileOutputStream uncompressedFileStream = new FileOutputStream(
-                        decompressedFile = File.createTempFile("jfr_", null))) {
+             FileOutputStream uncompressedFileStream = new FileOutputStream(
+                     decompressedFile = File.createTempFile("jfr_", null))) {
 
             decompressedFile.deleteOnExit();
             int numberOfBytes;
