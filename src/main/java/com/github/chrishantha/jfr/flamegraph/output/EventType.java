@@ -4,6 +4,8 @@ import com.beust.jcommander.IStringConverter;
 import com.jrockit.mc.flightrecorder.spi.IEvent;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -50,24 +52,21 @@ public enum EventType {
 
 
     public static final class EventTypeConverter implements IStringConverter<EventType> {
+        private static final Map<String, EventType> typesByOption = new HashMap<>();
+
+        static {
+            for (EventType type : EventType.values()) {
+                typesByOption.put(type.commandLineOption, type);
+            }
+        }
+
         @Override
         public EventType convert(String commandLineOption) {
-            switch (commandLineOption) {
-                case "allocation-tlab":
-                    return ALLOCATION_IN_NEW_TLAB;
-                case "allocation-outside-tlab":
-                    return ALLOCATION_OUTSIDE_TLAB;
-                case "exceptions":
-                    return JAVA_EXCEPTION;
-                case "monitor-blocked":
-                    return JAVA_MONITOR_BLOCKED;
-                case "cpu":
-                    return METHOD_PROFILING_SAMPLE;
-                case "io":
-                    return IO;
-                default:
-                    throw new IllegalArgumentException("Event type [" + commandLineOption + "] does not exist.");
+            EventType eventType = typesByOption.get(commandLineOption);
+            if (eventType == null) {
+                throw new IllegalArgumentException("Event type [" + commandLineOption + "] does not exist.");
             }
+            return eventType;
         }
     }
 
