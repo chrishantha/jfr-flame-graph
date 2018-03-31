@@ -18,7 +18,7 @@ public enum EventType {
     EVENT_ALLOCATION_IN_NEW_TLAB("Allocation in new TLAB", "allocation-tlab", "tlabSize"),
     EVENT_ALLOCATION_OUTSIDE_TLAB("Allocation outside TLAB", "allocation-outside-tlab", "allocationSize"),
     EVENT_JAVA_EXCEPTION("Java Exception", "exceptions"),
-    EVENT_JAVA_MONITOR_BLOCKED("Java Monitor Blocked", "monitor-blocked");
+    EVENT_JAVA_MONITOR_BLOCKED("Java Monitor Blocked", "monitor-blocked", "(duration)");
 
     private final String name;
     private final String commandLineOption;
