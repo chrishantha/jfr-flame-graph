@@ -88,13 +88,13 @@ public enum EventType {
         ALLOCATION_SIZE {
             @Override
             public long getValue(IEvent event) {
-                return (long) event.getValue("allocationSize");
+                return (long) event.getValue("allocationSize") / 1000;
             }
         },
         TLAB_SIZE {
             @Override
             public long getValue(IEvent event) {
-                return (long) event.getValue("tlabSize");
+                return (long) event.getValue("tlabSize") / 1000;
             }
         };
 
