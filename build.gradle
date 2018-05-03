@@ -1,9 +1,6 @@
 plugins {
   id 'application'
-  id 'maven-publish'
-  id "com.github.johnrengelman.shadow" version "2.0.2"
 }
-
 
 apply from: "gradle/missioncontrol.gradle"
 
@@ -18,20 +15,4 @@ dependencies {
   testImplementation "junit:junit:4.12"
 }
 
-group = "com.github.oehme.jfr"
-version = "0.0.3"
 mainClassName = 'com.github.chrishantha.jfr.flamegraph.output.Application'
-
-shadowJar {
-  relocate 'com.beust', 'shadow.com.beust'
-  relocate 'com.google', 'shadow.google'
-  relocate 'com.jrockit', 'shadow.jrockit'
-}
-
-publishing {
-  publications {
-    shadow(MavenPublication) { publication ->
-      project.shadow.component(publication)
-    }
-  }
-}
