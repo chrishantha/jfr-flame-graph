@@ -1,5 +1,5 @@
 plugins {
-  id 'application'
+    id 'application'
 }
 
 apply plugin: 'java'
@@ -12,18 +12,18 @@ description = """flamegraph-output"""
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 tasks.withType(JavaCompile) {
-	options.encoding = 'UTF-8'
+    options.encoding = 'UTF-8'
 }
 
 repositories {
-  jcenter()
+    jcenter()
 }
 
 dependencies {
-  implementation findMcJars()
-  implementation "com.beust:jcommander:1.71"
-  implementation "com.google.code.gson:gson:2.8.0"
-  testImplementation "junit:junit:4.12"
+    implementation findMcJars()
+    implementation "com.beust:jcommander:1.71"
+    implementation "com.google.code.gson:gson:2.8.0"
+    testImplementation "junit:junit:4.12"
 }
 
 mainClassName = 'com.github.chrishantha.jfr.flamegraph.output.Application'

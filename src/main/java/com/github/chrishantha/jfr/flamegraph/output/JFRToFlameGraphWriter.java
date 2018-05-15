@@ -25,7 +25,14 @@ import com.jrockit.mc.flightrecorder.spi.IEvent;
 import com.jrockit.mc.flightrecorder.spi.ITimeRange;
 import com.jrockit.mc.flightrecorder.spi.IView;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.Instant;
