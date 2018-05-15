@@ -2,7 +2,18 @@ plugins {
   id 'application'
 }
 
+apply plugin: 'java'
 apply from: "gradle/missioncontrol.gradle"
+
+group = 'com.github.chrishantha.jfr'
+version = '0.0.3-SNAPSHOT'
+description = """flamegraph-output"""
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+tasks.withType(JavaCompile) {
+	options.encoding = 'UTF-8'
+}
 
 repositories {
   jcenter()
