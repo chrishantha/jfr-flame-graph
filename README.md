@@ -15,16 +15,7 @@ See my blog post on "[Flame Graphs with Java Flight Recordings]" for more detail
 
 ## How to build
 
-**Step 1:**
-
-Run `install-mc-jars.sh` script.
-
-> The required JMC dependencies need to be installed to a local repository first. The script will install required JMC jars to the local repository (The `repo` directory) and output a file named `jmc_version.properties`, which will show you the version of Java Mission Control Dependencies used.
-> This script should automatically update the `<jmc.version>` property in `pom.xml`. Please verify that the `<jmc.version>` value is equal to the version found in `jmc_version.properties`.
-
-**Step 2:**
-
-Run `mvn clean install -U`.
+Call `./gradlew assemble`
 
 ## Clone FlameGraph repository
 
@@ -93,7 +84,7 @@ $ ./flamegraph-output.sh -h
             -s, --use-simple-names
               Use simple names instead of qualified names in the stack
               Default: false
-  
+
       json      Create json output for d3-flame-graph
         Usage: json [options]
           Options:

@@ -94,7 +94,7 @@ public class JsonOutputWriter implements FlameGraphOutputWriter {
     }
 
     @Override
-    public void processEvent(long startTimestamp, long endTimestamp, long duration, Stack<String> stack, Long size) {
+    public void processEvent(long startTimestamp, long endTimestamp, long duration, Stack<String> stack, long size) {
         StackFrame frame;
         if (exportTimestamp) {
             long startTimestampSecEpoch = TimeUnit.NANOSECONDS.toSeconds(startTimestamp);

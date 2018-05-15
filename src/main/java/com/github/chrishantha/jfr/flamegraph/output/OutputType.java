@@ -23,24 +23,30 @@ public enum OutputType {
     /**
      * Create folded output
      */
-    FOLDED("folded", new FoldedOutputWriter()),
+    FOLDED("folded") {
+        @Override
+        public FlameGraphOutputWriter createFlameGraphOutputWriter() {
+            return new FoldedOutputWriter();
+        }
+    },
 
     /**
      * Create json output for d3-flame-graph
      */
-    JSON("json", new JsonOutputWriter());
+    JSON("json") {
+        @Override
+        public FlameGraphOutputWriter createFlameGraphOutputWriter() {
+            return new JsonOutputWriter();
+        }
+    };
 
     private final String name;
-    private final FlameGraphOutputWriter flameGraphOutputWriter;
 
-    OutputType(String name, FlameGraphOutputWriter flameGraphOutputWriter) {
+    OutputType(String name) {
         this.name = name;
-        this.flameGraphOutputWriter = flameGraphOutputWriter;
     }
 
-    public FlameGraphOutputWriter getFlameGraphOutputWriter() {
-        return flameGraphOutputWriter;
-    }
+    public abstract FlameGraphOutputWriter createFlameGraphOutputWriter();
 
     @Override
     public String toString() {

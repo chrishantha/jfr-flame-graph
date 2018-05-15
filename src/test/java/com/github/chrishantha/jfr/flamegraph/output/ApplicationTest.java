@@ -76,13 +76,13 @@ public class ApplicationTest extends TestCase {
     public void testEventTypeOption() throws Exception {
         String[] args = { "-f", "temp", "-e", "allocation-tlab" };
         parseCommands(args);
-        assertEquals(EventType.EVENT_ALLOCATION_IN_NEW_TLAB, jfrToFlameGraphWriter.eventType);
+        assertEquals(EventType.ALLOCATION_IN_NEW_TLAB, jfrToFlameGraphWriter.eventType);
     }
 
     public void testEventTypeOptionDefaultValue() throws Exception {
         String[] args = { "-f", "temp" };
         parseCommands(args);
-        assertEquals(EventType.EVENT_METHOD_PROFILING_SAMPLE, jfrToFlameGraphWriter.eventType);
+        assertEquals(EventType.METHOD_PROFILING_SAMPLE, jfrToFlameGraphWriter.eventType);
     }
 
 }
