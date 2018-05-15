@@ -36,8 +36,7 @@ public class FoldedOutputWriter implements FlameGraphOutputWriter {
     }
 
     @Override
-    public void processEvent(long startTimestamp, long endTimestamp, long duration, Stack<String> stack, Long value) {
-        // StringBuilder to keep stack trace
+    public void processEvent(long startTimestamp, long endTimestamp, long duration, Stack<String> stack, long value) {
         StringBuilder stackTraceBuilder = new StringBuilder();
         boolean appendSemicolon = false;
         while (!stack.empty()) {

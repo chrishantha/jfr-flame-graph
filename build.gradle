@@ -1,0 +1,18 @@
+plugins {
+  id 'application'
+}
+
+apply from: "gradle/missioncontrol.gradle"
+
+repositories {
+  jcenter()
+}
+
+dependencies {
+  implementation findMcJars()
+  implementation "com.beust:jcommander:1.71"
+  implementation "com.google.code.gson:gson:2.8.0"
+  testImplementation "junit:junit:4.12"
+}
+
+mainClassName = 'com.github.chrishantha.jfr.flamegraph.output.Application'

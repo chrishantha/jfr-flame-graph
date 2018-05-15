@@ -1,74 +1,102 @@
 package com.github.chrishantha.jfr.flamegraph.output;
 
 import com.beust.jcommander.IStringConverter;
+import com.jrockit.mc.flightrecorder.spi.IEvent;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Different types of events possibly available in a JFR recording.
+ * <p>
+ * Each type can be activated using a command line option and can match one or many
+ * JFR event types. Each type knows how to convert the event into a numeric value
+ * that will make the flame graph most meaningful. For allocation events this would
+ * be the number of bytes allocated, while for file reads it would be the duration of
+ * the read operation.
  */
 public enum EventType {
 
-    EVENT_METHOD_PROFILING_SAMPLE("Method Profiling Sample", "cpu"),
-    EVENT_ALLOCATION_IN_NEW_TLAB("Allocation in new TLAB", "allocation-tlab", true), 
-    EVENT_ALLOCATION_OUTSIDE_TLAB("Allocation outside TLAB", "allocation-outside-tlab", true), 
-    EVENT_JAVA_EXCEPTION("Java Exception", "exceptions"),
-    EVENT_JAVA_MONITOR_BLOCKED("Java Monitor Blocked", "monitor-blocked");
+    METHOD_PROFILING_SAMPLE("cpu", ValueField.COUNT, "Method Profiling Sample"),
+    ALLOCATION_IN_NEW_TLAB("allocation-tlab", ValueField.TLAB_SIZE, "Allocation in new TLAB"),
+    ALLOCATION_OUTSIDE_TLAB("allocation-outside-tlab", ValueField.ALLOCATION_SIZE, "Allocation outside TLAB"),
+    JAVA_EXCEPTION("exceptions", ValueField.COUNT, "Java Exception"),
+    JAVA_MONITOR_BLOCKED("monitor-blocked", ValueField.DURATION, "Java Monitor Blocked"),
+    IO("io", ValueField.DURATION, "File Read", "File Write", "Socket Read", "Socket Write");
 
-    /** Name as declared in the JFR recording */
-    private final String name;
+    private final String commandLineOption;
+    private final ValueField valueField;
+    private final String[] eventNames;
 
-    /** Id used as a command line option */
-    private final String id;
-
-    /** True if the event is allocation-related */
-    private final boolean isAllocation;
-
-    EventType(String name, String id, boolean isAllocation) {
-        this.name = name;
-        this.id = id;
-        this.isAllocation = isAllocation;
+    EventType(String commandLineOption, ValueField valueField, String... eventNames) {
+        this.eventNames = eventNames;
+        this.commandLineOption = commandLineOption;
+        this.valueField = valueField;
     }
 
-    EventType(String name, String id) {
-        this(name, id, false);
+    public boolean matches(IEvent event) {
+        String name = event.getEventType().getName();
+        return Arrays.stream(eventNames).anyMatch(name::equals);
     }
 
-    public String getName() {
-        return name;
+    public long getValue(IEvent event) {
+        return valueField.getValue(event);
     }
 
     @Override
     public String toString() {
-        return id;
+        return commandLineOption;
     }
 
-    /**
-     * @return true if the event is allocated related
-     */
-    public boolean isAllocation() {
-        return isAllocation;
-    }
-
-    public static EventType from(String name) {
-        switch (name) {
-        case "allocation-tlab":
-            return EVENT_ALLOCATION_IN_NEW_TLAB;
-        case "allocation-outside-tlab":
-            return EVENT_ALLOCATION_OUTSIDE_TLAB;
-        case "exceptions":
-            return EVENT_JAVA_EXCEPTION;
-        case "monitor-blocked":
-            return EVENT_JAVA_MONITOR_BLOCKED;
-        case "cpu":
-            return EVENT_METHOD_PROFILING_SAMPLE;
-        default:
-            throw new IllegalArgumentException("Event type [" + name + "] does not exist.");
-        }
-    }
 
     public static final class EventTypeConverter implements IStringConverter<EventType> {
-        @Override
-        public EventType convert(String value) {
-            return EventType.from(value);
+        private static final Map<String, EventType> typesByOption = new HashMap<>();
+
+        static {
+            for (EventType type : EventType.values()) {
+                typesByOption.put(type.commandLineOption, type);
+            }
         }
+
+        @Override
+        public EventType convert(String commandLineOption) {
+            EventType eventType = typesByOption.get(commandLineOption);
+            if (eventType == null) {
+                throw new IllegalArgumentException("Event type [" + commandLineOption + "] does not exist.");
+            }
+            return eventType;
+        }
+    }
+
+    private enum ValueField {
+        COUNT {
+            @Override
+            public long getValue(IEvent event) {
+                return 1;
+            }
+        },
+        DURATION {
+            @Override
+            public long getValue(IEvent event) {
+                long nanos = (long) event.getValue("(duration)");
+                return TimeUnit.NANOSECONDS.toMillis(nanos);
+            }
+        },
+        ALLOCATION_SIZE {
+            @Override
+            public long getValue(IEvent event) {
+                return (long) event.getValue("allocationSize") / 1000;
+            }
+        },
+        TLAB_SIZE {
+            @Override
+            public long getValue(IEvent event) {
+                return (long) event.getValue("tlabSize") / 1000;
+            }
+        };
+
+        public abstract long getValue(IEvent event);
     }
 }
