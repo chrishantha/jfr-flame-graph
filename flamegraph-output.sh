@@ -19,4 +19,4 @@
 
 JFG_DIR=$(dirname "$0")
 
-java $JVM_ARGS -jar ${JFG_DIR}/build/libs/jfr-flamegraph-*-all.jar $*
+java $JVM_ARGS -jar ${JFG_DIR}/target/flamegraph-output-*.jar $*

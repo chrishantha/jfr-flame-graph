@@ -15,7 +15,7 @@ See my blog post on "[Flame Graphs with Java Flight Recordings]" for more detail
 
 ## How to build
 
-Call `./gradlew assemble`
+Call `./gradlew clean assemble`
 
 ## Clone FlameGraph repository
 
