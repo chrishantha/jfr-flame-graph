@@ -95,7 +95,7 @@ fi
 
 jfr_filename=$(basename $jfr_file)
 
-details=$(${JFG_DIR}/flamegraph-output.sh -ot folded $decompress -f $jfr_file -j -t)
+details=$(${JFG_DIR}/jfr-flame-graph -ot folded $decompress -f $jfr_file -j -t)
 
 echo "$details"
 
@@ -127,7 +127,7 @@ while [ $i -lt $end ]; do
     output_file=flamegraph-$s-$e.svg
 
     # Use folded output type
-    flamegraph_output_command="${JFG_DIR}/flamegraph-output.sh"
+    flamegraph_output_command="${JFG_DIR}/jfr-flame-graph"
     flamegraph_output_args=(-ot folded $decompress -f $jfr_file -st $s -et $e $ignore_lines)
     framegraph_generate_command="$FLAMEGRAPH_DIR/flamegraph.pl"
     framegraph_generate_args=(--title "$title" --width 1600)

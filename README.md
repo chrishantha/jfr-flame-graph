@@ -32,9 +32,14 @@ export FLAMEGRAPH_DIR=/path/to/FlameGraph
 
 There are helper scripts, to generate the flame graphs.
 
+You must extract the distribution in order to run helper scripts.
+
 For example:
 
 ```
+cd build/distributions/
+unzip jfr-flame-graph-*.zip
+cd jfr-flame-graph-*/bin
 ./create_flamegraph.sh -f /tmp/highcpu.jfr -i > flamegraph.svg
 ```
 Open the SVG file in your web browser.
@@ -43,85 +48,53 @@ Use -h with scripts to see the available options.
 
 For example:
 ```
-$ ./flamegraph-output.sh -h
-  Usage: Application [options] [command] [command options]
+$ ./jfr-flame-graph -h
+  Usage: JFRToFlameGraphWriter [options]
     Options:
+      -d, --decompress
+        Decompress the JFR file
+        Default: false
+      -et, --end-timestamp
+        End timestamp in seconds for filtering
+        Default: 9223372036854775807
+      -e, --event
+        Type of event used to generate the flamegraph
+        Default: cpu
+        Possible Values: [cpu, allocation-tlab, allocation-outside-tlab, exceptions, monitor-blocked, io]
       -h, --help
         Display Help
+      -ha, --hide-arguments
+        Hide arguments in methods
         Default: false
-    Commands:
-      folded      Create folded output
-        Usage: folded [options]
-          Options:
-            -d, --decompress
-              Decompress the JFR file
-              Default: false
-            -y, --end-timestamp
-              End timestamp in seconds for filtering
-              Default: 0
-            -a, --hide-arguments
-              Hide arguments in methods
-              Default: false
-            -i, --ignore-line-numbers
-              Ignore Line Numbers in Stack Frame
-              Default: false
-          * -f, --jfrdump
-              Java Flight Recorder Dump
-            -o, --output
-              Output file
-            -j, --print-jfr-details
-              Print JFR details and exit
-              Default: false
-            -t, --print-timestamp
-              Print timestamp in JFR Details
-              Default: false
-            -r, --show-return-value
-              Show return value for methods in the stack
-              Default: false
-            -x, --start-timestamp
-              Start timestamp in seconds for filtering
-              Default: 0
-            -s, --use-simple-names
-              Use simple names instead of qualified names in the stack
-              Default: false
-
-      json      Create json output for d3-flame-graph
-        Usage: json [options]
-          Options:
-            -d, --decompress
-              Decompress the JFR file
-              Default: false
-            -y, --end-timestamp
-              End timestamp in seconds for filtering
-              Default: 0
-            -a, --hide-arguments
-              Hide arguments in methods
-              Default: false
-            -i, --ignore-line-numbers
-              Ignore Line Numbers in Stack Frame
-              Default: false
-          * -f, --jfrdump
-              Java Flight Recorder Dump
-            -l, --live
-              Export stack trace sample timestamp
-              Default: false
-            -o, --output
-              Output file
-            -j, --print-jfr-details
-              Print JFR details and exit
-              Default: false
-            -t, --print-timestamp
-              Print timestamp in JFR Details
-              Default: false
-            -r, --show-return-value
-              Show return value for methods in the stack
-              Default: false
-            -x, --start-timestamp
-              Start timestamp in seconds for filtering
-              Default: 0
-            -s, --use-simple-names
-              Use simple names instead of qualified names in the stack
-              Default: false
+      -i, --ignore-line-numbers
+        Ignore Line Numbers in Stack Frame
+        Default: false
+    * -f, --jfrdump
+        Java Flight Recorder Dump
+      -l, --live
+        Export stack trace sample timestamp (in json output type)
+        Default: false
+      -o, --output
+        Output file
+      -ot, --output-type
+        Output type
+        Default: folded
+        Possible Values: [folded, json]
+      -j, --print-jfr-details
+        Print JFR details and exit
+        Default: false
+      -t, --print-timestamp
+        Print timestamp in JFR Details
+        Default: false
+      -rv, --show-return-value
+        Show return value for methods in the stack
+        Default: false
+      -st, --start-timestamp
+        Start timestamp in seconds for filtering
+        Default: -9223372036854775808
+      -sn, --use-simple-names
+        Use simple names instead of qualified names in the stack
+        Default: false
 ```
 
 ## License

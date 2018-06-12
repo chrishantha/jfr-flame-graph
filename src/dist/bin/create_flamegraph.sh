@@ -28,9 +28,9 @@ fi
 function help {
     echo ""
     echo "Usage: "
-    echo "create-flamegraph.sh [some options supported by flamegraph-output.sh]"
+    echo "create-flamegraph.sh [some options supported by jfr-flame-graph]"
     echo ""
-    echo "See: flamegraph-output.sh -h"
+    echo "See: jfr-flame-graph -h"
     echo ""
 }
 
@@ -58,4 +58,4 @@ fi
 jfr_filename=$(basename $jfr_file)
 
 # Use folded output type
-${JFG_DIR}/flamegraph-output.sh -ot folded $* | $FLAMEGRAPH_DIR/flamegraph.pl --title "Flame Graph: $jfr_filename"
+${JFG_DIR}/jfr-flame-graph -ot folded $* | $FLAMEGRAPH_DIR/flamegraph.pl --title "Flame Graph: $jfr_filename"
