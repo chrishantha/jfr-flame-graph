@@ -8,7 +8,7 @@ plugins {
 apply from: "gradle/missioncontrol.gradle"
 
 group = 'com.github.chrishantha.jfr'
-version = '0.0.3-SNAPSHOT'
+version = '0.0.4-SNAPSHOT'
 description = "Create Flame Graphs using Java Flight Recordings"
 
 sourceCompatibility = 1.8
