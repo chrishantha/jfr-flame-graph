@@ -1,6 +1,7 @@
 plugins {
     id 'application'
     id "com.github.ben-manes.versions" version "0.17.0"
+    id "org.nosphere.apache.rat" version "0.3.1"
 }
 
 apply from: "gradle/missioncontrol.gradle"
@@ -21,9 +22,14 @@ repositories {
 
 dependencies {
     implementation findMcJars()
-    implementation "com.beust:jcommander:1.71"
-    implementation "com.google.code.gson:gson:2.8.0"
+    implementation "com.beust:jcommander:1.72"
+    implementation "com.google.code.gson:gson:2.8.5"
     testImplementation "junit:junit:4.12"
+}
+
+rat {
+    excludes = ["**/.gradle/**", "**/gradle/**", "**/*.gradle", "**/gradlew*", "**/build/**", "**/.idea/**", "**/*.iml",
+                "**/*.md", ".travis.yml"]
 }
 
 mainClassName = 'com.github.chrishantha.jfr.flamegraph.output.Application'
