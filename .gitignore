@@ -2,19 +2,17 @@
 hs_err_pid*
 
 #Gradle
-.gradle
-build
+.gradle/
+build/
 
-#Maven Target
-target/
-
-#Eclipse files
+#Eclipse
 .project
 .classpath
 
-#Idea Files
-.idea
+#Idea
+.idea/
 *.iml
+out/
 
 .metadata
 bin/
@@ -25,14 +23,6 @@ tmp/
 *~.nib
 .settings/
 
-#Ignore generated files
-jmc_version.properties
-
-#Local Repo
-repo/
-
 #Local Flame Graphs
 *.svg
 
-#Generated pom.xml
-dependency-reduced-pom.xml
