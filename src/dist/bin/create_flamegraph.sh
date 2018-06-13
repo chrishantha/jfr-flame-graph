@@ -21,7 +21,7 @@ set -e
 JFG_DIR=$(dirname "$0")
 
 if [ ! -x "$FLAMEGRAPH_DIR/flamegraph.pl" ]; then
-  echo "Please clone https://github.com/brendangregg/FlameGraph and set FLAMEGRAPH_DIR to the root directory"
+  (>&2 echo "Please clone https://github.com/brendangregg/FlameGraph and set FLAMEGRAPH_DIR to the root directory")
   exit 1
 fi
 
@@ -50,8 +50,8 @@ do
 done
 
 if [[ ! -f $jfr_file ]]; then
-    echo "Please specify the JFR file"
-    help
+    (>&2 echo "Please specify the JFR file")
+    (>&2 help)
     exit 1
 fi
 
