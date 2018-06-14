@@ -4,18 +4,28 @@ Converting JFR Method Profiling Samples to FlameGraph compatible format.
 ========================================================================
 
 This is a simple application to read Method Profiling Samples from Java Flight Recorder dump and convert those Stack Traces to [FlameGraph] compatible format.
+
 [FlameGraph]: https://github.com/brendangregg/FlameGraph
 
 This application uses the unsupported [JMC Parser].
+
 [JMC Parser]: http://hirt.se/blog/?p=446
 
 See my blog post on "[Flame Graphs with Java Flight Recordings]" for more details.
 
 [Flame Graphs with Java Flight Recordings]: http://isuru-perera.blogspot.com/2015/05/flame-graphs-with-java-flight-recordings.html
 
-## How to build
+## How to build and install
 
-Call `./gradlew clean assemble`
+Build and install `jfr-flame-graph` app using
+
+```
+./gradlew installDist`
+```
+
+This will install the executable into `./build/install/jfr-flame-graph/bin`.
+
+You can add this location to your `PATH`.
 
 ## Clone FlameGraph repository
 
@@ -30,16 +40,11 @@ export FLAMEGRAPH_DIR=/path/to/FlameGraph
 
 ## How to generate a Flame Graph
 
-There are helper scripts, to generate the flame graphs.
-
-You must extract the distribution in order to run helper scripts.
+There are helper scripts, to generate the flame graphs in `./build/install/jfr-flame-graph/bin` directory.
 
 For example:
 
 ```
-cd build/distributions/
-unzip jfr-flame-graph-*.zip
-cd jfr-flame-graph-*/bin
 ./create_flamegraph.sh -f /tmp/highcpu.jfr -i > flamegraph.svg
 ```
 Open the SVG file in your web browser.
