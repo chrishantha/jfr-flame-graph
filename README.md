@@ -20,7 +20,7 @@ See my blog post on "[Flame Graphs with Java Flight Recordings]" for more detail
 Build and install `jfr-flame-graph` app using
 
 ```
-./gradlew installDist`
+./gradlew installDist
 ```
 
 This will install the executable into `./build/install/jfr-flame-graph/bin`.
