@@ -1,8 +1,12 @@
 plugins {
     id 'application'
-    id "com.github.ben-manes.versions" version "0.17.0"
-    id "org.nosphere.apache.rat" version "0.3.1"
-    id 'net.researchgate.release' version '2.6.0'
+    id "com.github.ben-manes.versions" version "0.21.0"
+    id "org.nosphere.apache.rat" version "0.4.0"
+    id 'net.researchgate.release' version '2.8.0'
+}
+
+wrapper {
+    distributionType = Wrapper.DistributionType.ALL
 }
 
 apply from: "gradle/missioncontrol.gradle"
