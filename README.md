@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/chrishantha/jfr-flame-graph.svg?branch=master)](https://travis-ci.org/chrishantha/jfr-flame-graph)
+Note: Travis has removed the support for Oracle JDK 8. Therefore the build status is removed temporarily.
 
 Converting JFR Method Profiling Samples to FlameGraph compatible format.
 ========================================================================
@@ -14,6 +14,10 @@ This application uses the unsupported [JMC Parser].
 See my blog post on "[Flame Graphs with Java Flight Recordings]" for more details.
 
 [Flame Graphs with Java Flight Recordings]: http://isuru-perera.blogspot.com/2015/05/flame-graphs-with-java-flight-recordings.html
+
+## Prerequisites
+
+This project depends on Oracle JDK 8. Therefore, make sure that `JAVA_HOME` is set to Oracle JDK 8.
 
 ## How to build and install
 
