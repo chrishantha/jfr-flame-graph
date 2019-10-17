@@ -44,7 +44,7 @@ export FLAMEGRAPH_DIR=/path/to/FlameGraph
 
 ## How to generate a Flame Graph
 
-There are helper scripts, to generate the flame graphs in `./build/install/jfr-flame-graph/bin` directory.
+There are helper scripts, to generate the flame graphs in `./build/install/jfr-flame-graph/scripts` directory.
 
 For example:
 
