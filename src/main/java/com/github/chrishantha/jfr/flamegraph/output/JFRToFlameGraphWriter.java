@@ -93,6 +93,10 @@ public final class JFRToFlameGraphWriter {
             "--event"}, description = "Type of event used to generate the flamegraph", converter = EventType.EventTypeConverter.class)
     EventType eventType = EventType.METHOD_PROFILING_SAMPLE;
 
+    @Parameter(names = {"-rev",
+            "--reverse-call-stack"}, description = "Reverse call stacks so that it can show JFR style graph(bottom-up)")
+    boolean reverseCallStack;
+
     private static final String EVENT_VALUE_STACK = "(stackTrace)";
 
     private static final String PRINT_FORMAT = "%-16s: %s%n";
@@ -235,6 +239,13 @@ public final class JFRToFlameGraphWriter {
             if (frameName != null) {
                 stack.push(frameName);
             }
+        }
+        if(reverseCallStack){
+            Stack<String> stack_rev = new Stack<>();
+            while(stack != null && !stack.isEmpty()){
+                stack_rev.push(stack.pop());
+            }
+            stack = stack_rev;
         }
         return stack;
     }
