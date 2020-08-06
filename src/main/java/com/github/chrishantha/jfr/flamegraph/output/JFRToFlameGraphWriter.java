@@ -242,7 +242,7 @@ public final class JFRToFlameGraphWriter {
         }
         if(reverseCallStack){
             Stack<String> stack_rev = new Stack<>();
-            while(stack != null && !stack.isEmpty()){
+            while(!stack.isEmpty()){
                 stack_rev.push(stack.pop());
             }
             stack = stack_rev;
