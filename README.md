@@ -98,6 +98,9 @@ $ ./jfr-flame-graph -h
       -rv, --show-return-value
         Show return value for methods in the stack
         Default: false
+      -rev, --reverse-call-stack
+        Reverse call stacks so that it can show JFR style graph(bottom-up)
+        Default: false
       -st, --start-timestamp
         Start timestamp in seconds for filtering
         Default: -9223372036854775808

@@ -85,4 +85,9 @@ public class ApplicationTest extends TestCase {
         assertEquals(EventType.METHOD_PROFILING_SAMPLE, jfrToFlameGraphWriter.eventType);
     }
 
+    public void testReverseCallStackValue() throws Exception {
+        String[] args = {"-f", "temp", "-rev"};
+        parseCommands(args);
+        assertTrue(jfrToFlameGraphWriter.reverseCallStack);
+    }
 }
