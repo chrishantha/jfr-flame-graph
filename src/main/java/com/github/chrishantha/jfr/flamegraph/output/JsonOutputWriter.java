@@ -77,7 +77,7 @@ public class JsonOutputWriter implements FlameGraphOutputWriter {
             this.name = name;
         }
 
-        public StackFrame addFrame(String frameName) {
+        public StackFrame addFrame(String frameName, long size) {
             if (children == null) {
                 children = new ArrayList<>();
             }
@@ -87,7 +87,7 @@ public class JsonOutputWriter implements FlameGraphOutputWriter {
                 childrenMap.put(frameName, frame);
                 children.add(frame);
             }
-            frame.value++;
+            frame.value += size;
             return frame;
         }
     }
@@ -108,7 +108,7 @@ public class JsonOutputWriter implements FlameGraphOutputWriter {
         }
 
         while (!stack.empty()) {
-            frame = frame.addFrame(stack.pop());
+            frame = frame.addFrame(stack.pop(), size);
         }
     }
 
