@@ -17,6 +17,8 @@ package com.github.chrishantha.jfr.flamegraph.output;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Stack;
 
 /**
@@ -26,7 +28,7 @@ public interface FlameGraphOutputWriter {
 
     void initialize(OutputWriterParameters parameters);
 
-    void processEvent(long startTimestamp, long endTimestamp, long duration, Stack<String> stack, long value);
+    void processEvent(Instant startTimestamp, Instant endTimestamp, Duration duration, Stack<String> stack, long value);
 
     void writeOutput(BufferedWriter bufferedWriter) throws IOException;
 }
