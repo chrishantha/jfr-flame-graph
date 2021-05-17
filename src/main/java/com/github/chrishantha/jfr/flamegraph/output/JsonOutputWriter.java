@@ -20,6 +20,8 @@ import com.google.gson.GsonBuilder;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -98,10 +100,10 @@ public class JsonOutputWriter implements FlameGraphOutputWriter {
     }
 
     @Override
-    public void processEvent(long startTimestamp, long endTimestamp, long duration, Stack<String> stack, long size) {
+    public void processEvent(Instant startTimestamp, Instant endTimestamp, Duration duration, Stack<String> stack, long size) {
         StackFrame frame;
         if (exportTimestamp) {
-            long startTimestampSecEpoch = TimeUnit.NANOSECONDS.toSeconds(startTimestamp);
+            long startTimestampSecEpoch = startTimestamp.getEpochSecond();
             frame = liveRecording.getProfile(startTimestampSecEpoch);
         } else {
             frame = profile;

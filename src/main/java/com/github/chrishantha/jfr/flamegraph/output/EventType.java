@@ -17,7 +17,7 @@
 package com.github.chrishantha.jfr.flamegraph.output;
 
 import com.beust.jcommander.IStringConverter;
-import com.jrockit.mc.flightrecorder.spi.IEvent;
+import jdk.jfr.consumer.RecordedEvent;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -35,10 +35,10 @@ import java.util.concurrent.TimeUnit;
  */
 public enum EventType {
 
-    METHOD_PROFILING_SAMPLE("cpu", ValueField.COUNT, "Method Profiling Sample"),
-    ALLOCATION_IN_NEW_TLAB("allocation-tlab", ValueField.TLAB_SIZE, "Allocation in new TLAB"),
-    ALLOCATION_OUTSIDE_TLAB("allocation-outside-tlab", ValueField.ALLOCATION_SIZE, "Allocation outside TLAB"),
-    JAVA_EXCEPTION("exceptions", ValueField.COUNT, "Java Exception"),
+    METHOD_PROFILING_SAMPLE("cpu", ValueField.COUNT, "jdk.ExecutionSample"),
+    ALLOCATION_IN_NEW_TLAB("allocation-tlab", ValueField.TLAB_SIZE, "jdk.ObjectAllocationInNewTLAB"),
+    ALLOCATION_OUTSIDE_TLAB("allocation-outside-tlab", ValueField.ALLOCATION_SIZE, "jdk.ObjectAllocationOutsideTLAB"),
+    JAVA_EXCEPTION("exceptions", ValueField.COUNT, "jdk.JavaExceptionThrow"),
     JAVA_MONITOR_BLOCKED("monitor-blocked", ValueField.DURATION, "Java Monitor Blocked"),
     IO("io", ValueField.DURATION, "File Read", "File Write", "Socket Read", "Socket Write");
 
@@ -52,12 +52,12 @@ public enum EventType {
         this.valueField = valueField;
     }
 
-    public boolean matches(IEvent event) {
+    public boolean matches(RecordedEvent event) {
         String name = event.getEventType().getName();
         return Arrays.stream(eventNames).anyMatch(name::equals);
     }
 
-    public long getValue(IEvent event) {
+    public long getValue(RecordedEvent event) {
         return valueField.getValue(event);
     }
 
@@ -89,30 +89,30 @@ public enum EventType {
     private enum ValueField {
         COUNT {
             @Override
-            public long getValue(IEvent event) {
+            public long getValue(RecordedEvent event) {
                 return 1;
             }
         },
         DURATION {
             @Override
-            public long getValue(IEvent event) {
+            public long getValue(RecordedEvent event) {
                 long nanos = (long) event.getValue("(duration)");
                 return TimeUnit.NANOSECONDS.toMillis(nanos);
             }
         },
         ALLOCATION_SIZE {
             @Override
-            public long getValue(IEvent event) {
+            public long getValue(RecordedEvent event) {
                 return (long) event.getValue("allocationSize") / 1000;
             }
         },
         TLAB_SIZE {
             @Override
-            public long getValue(IEvent event) {
+            public long getValue(RecordedEvent event) {
                 return (long) event.getValue("tlabSize") / 1000;
             }
         };
 
-        public abstract long getValue(IEvent event);
+        public abstract long getValue(RecordedEvent event);
     }
 }

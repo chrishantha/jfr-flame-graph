@@ -17,6 +17,8 @@ package com.github.chrishantha.jfr.flamegraph.output;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Stack;
@@ -36,7 +38,7 @@ public class FoldedOutputWriter implements FlameGraphOutputWriter {
     }
 
     @Override
-    public void processEvent(long startTimestamp, long endTimestamp, long duration, Stack<String> stack, long value) {
+    public void processEvent(Instant startTimestamp, Instant endTimestamp, Duration duration, Stack<String> stack, long value) {
         StringBuilder stackTraceBuilder = new StringBuilder();
         boolean appendSemicolon = false;
         while (!stack.empty()) {
